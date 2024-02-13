@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { Course } from './course.entity';
 import { Quiz } from './quiz.entity';
@@ -13,9 +14,6 @@ import { LectureTimeRecord } from './lectureTimeRecord.entity';
 export class Lecture {
   @PrimaryGeneratedColumn()
   lectureId: number;
-
-  @Column()
-  courseId: number;
 
   @Column()
   lectureNumber: number;
@@ -43,6 +41,7 @@ export class Lecture {
   updatedAt: Date;
 
   @ManyToOne(() => Course, (course) => course.lectures)
+  @JoinColumn({ name: 'courseId' })
   course: Course;
 
   @OneToMany(() => Quiz, (quiz) => quiz.lecture)

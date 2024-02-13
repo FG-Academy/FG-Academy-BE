@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Quiz } from './quiz.entity';
 import { User } from './user.entity';
 
@@ -6,12 +12,6 @@ import { User } from './user.entity';
 export class QuizSubmit {
   @PrimaryGeneratedColumn()
   id: number; // Composite primary key 대신 단일 ID 사용
-
-  @Column()
-  userId: number;
-
-  @Column()
-  quizId: number;
 
   @Column('text', { nullable: true })
   submittedAnswer: string;
@@ -33,8 +33,10 @@ export class QuizSubmit {
   updatedAt: Date;
 
   @ManyToOne(() => Quiz, (quiz) => quiz.quizSubmits)
+  @JoinColumn({ name: 'quizId' })
   quiz: Quiz;
 
   @ManyToOne(() => User, (user) => user.quizSubmits)
+  @JoinColumn({ name: 'userId' })
   user: User;
 }

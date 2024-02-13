@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Course } from './course.entity';
 
 @Entity()
@@ -29,5 +35,6 @@ export class Announcement {
   updatedAt: Date;
 
   @ManyToOne(() => Course, (course) => course.announcements)
+  @JoinColumn({ name: 'courseId' })
   course: Course;
 }

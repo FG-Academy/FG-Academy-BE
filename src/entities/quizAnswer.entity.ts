@@ -1,13 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Quiz } from './quiz.entity';
 
 @Entity()
 export class QuizAnswer {
   @PrimaryGeneratedColumn()
   id: number; // 복합 키 대신 단일 ID 사용
-
-  @Column()
-  quizId: number;
 
   @Column()
   itemIndex: number;
@@ -32,5 +35,6 @@ export class QuizAnswer {
   updatedAt: Date;
 
   @ManyToOne(() => Quiz, (quiz) => quiz.quizAnswers)
+  @JoinColumn({ name: 'quizId' })
   quiz: Quiz;
 }
