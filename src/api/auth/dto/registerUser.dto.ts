@@ -7,7 +7,7 @@ import {
   MinLength,
   Validate,
 } from 'class-validator';
-import { IsUserAlreadyExist } from 'src/users/validator/isUserAlreadyExist.validator';
+import { IsUserAlreadyExist } from 'src/api/users/validator/isUserAlreadyExist.validator';
 
 export class RegisterUserDto {
   @IsDefined()

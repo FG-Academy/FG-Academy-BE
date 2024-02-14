@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/registerUser.dto';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from 'src/api/users/users.service';
 
 @Controller('auth')
 export class AuthController {
@@ -9,9 +9,10 @@ export class AuthController {
     private authService: AuthService,
     private usersService: UsersService,
   ) {}
-  @Post('signUp')
+  @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   async signUp(@Body() registerUserDto: RegisterUserDto) {
-    return this.usersService.signUp(registerUserDto);
+    return 'sdf';
+    // return this.usersService.signUp(registerUserDto);
   }
 }
