@@ -8,6 +8,7 @@ async function bootstrap() {
   app.enableCors({
     origin: 'http://localhost:3001',
   });
+  // app.useGlobalFilters(new GlobalExceptionFilter());
   await app.listen(3000);
 }
 bootstrap();
