@@ -4,9 +4,8 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
-
-import { User } from '../entities/user.entity';
 
 @ValidatorConstraint({ name: 'isUserAlreadyExist', async: true })
 @Injectable()
@@ -17,12 +16,12 @@ export class IsUserAlreadyExist implements ValidatorConstraintInterface {
   ) {}
 
   async validate(email: string): Promise<boolean> {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOne({ where: { email } });
 
-    return user === null || user === undefined;
+    return !user;
   }
 
   defaultMessage(): string {
-    return 'The email «$value» is already register.';
+    return '이미 등록된 이메일입니다.';
   }
 }

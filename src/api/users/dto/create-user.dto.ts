@@ -5,6 +5,7 @@ export class CreateUserDto {
   name: string;
 
   @IsNotEmpty()
+  // @Validate(IsUserAlreadyExist)
   email: string;
 
   @IsNotEmpty()
