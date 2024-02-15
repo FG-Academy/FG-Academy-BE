@@ -11,13 +11,13 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>, // UserRepository 주입
   ) {}
-  async signUp(user: CreateUserDto): Promise<void> {
+  async signUp(user: CreateUserDto): Promise<any> {
     const hashedPassword = await bcrypt.hash(user.password, 10);
 
     const newUser = this.usersRepository.create({
       name: user.name,
       email: user.email,
-      birthDate: new Date(user.birthDate),
+      birthDate: user.birthDate,
       password: hashedPassword,
       phoneNumber: user.phoneNumber,
       churchName: user.churchName,
@@ -27,6 +27,6 @@ export class UsersService {
     });
 
     await this.usersRepository.save(newUser);
-    return null;
+    return await this.usersRepository.save(newUser);
   }
 }

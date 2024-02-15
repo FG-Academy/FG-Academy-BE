@@ -8,6 +8,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   @Post('signUp')
   async signUp(@Body() createUserDto: CreateUserDto): Promise<void> {
+    console.log(createUserDto);
     return await this.usersService.signUp(createUserDto);
   }
 }
