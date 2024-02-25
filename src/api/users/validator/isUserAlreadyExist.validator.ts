@@ -12,12 +12,17 @@ import { Repository } from 'typeorm';
 export class IsUserAlreadyExist implements ValidatorConstraintInterface {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>,
   ) {}
 
   async validate(email: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { email } });
-
+    console.log(email);
+    const user = await this.usersRepository.findOne({
+      where: {
+        email,
+      },
+    });
+    console.log(user);
     return !user;
   }
 

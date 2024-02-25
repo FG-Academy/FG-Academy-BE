@@ -1,12 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Query } from '@nestjs/common';
+import { AuthService } from './api/auth/auth.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly authService: AuthService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get('/oauth')
+  async getKakaoInfo(@Query() query: { code }) {
+    // console.log(code);
+    await this.authService.kakaoLogin(query.code);
   }
 }

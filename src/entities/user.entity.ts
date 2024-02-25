@@ -1,7 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
 import { QuizSubmit } from './quizSubmit.entity';
 import { LectureTimeRecord } from './lectureTimeRecord.entity';
 import { Enrollment } from './enrollment.entity';
+import { Exclude } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 
 @Entity()
 export class User {
@@ -9,7 +18,7 @@ export class User {
   userId: number;
 
   @Column()
-  birthDate: string;
+  birthDate: Date;
 
   @Column({ length: 50 })
   name: string;
@@ -18,6 +27,7 @@ export class User {
   email: string;
 
   @Column({ length: 200 })
+  @Exclude()
   password: string;
 
   @Column({ length: 20 })
@@ -37,6 +47,13 @@ export class User {
 
   @Column({ length: 10, nullable: true })
   level: string;
+
+  @Column({ length: 50, nullable: true })
+  nameBirthId: string;
+
+  @Column({ nullable: true })
+  @Exclude()
+  refreshToken?: string;
 
   @Column({ length: 20, default: 'active' })
   status: string;
@@ -62,4 +79,28 @@ export class User {
 
   @OneToMany(() => Enrollment, (enrollment) => enrollment.user)
   enrollments: Enrollment[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPassword(): Promise<void> {
+    const salt = await bcrypt.genSalt();
+    if (!/^\$2[abxy]?\$\d+\$/.test(this.password)) {
+      this.password = await bcrypt.hash(this.password, salt);
+    }
+  }
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  setNameBirthId(): void {
+    const birthDate = new Date(this.birthDate);
+    const month = birthDate.getMonth() + 1; // JS에서 월은 0부터 시작하므로 1을 더해줍니다.
+    const day = birthDate.getDate();
+    const formattedMonth = month.toString().padStart(2, '0');
+    const formattedDay = day.toString().padStart(2, '0');
+    this.nameBirthId = `${this.name}${formattedMonth}${formattedDay}`;
+  }
+
+  async checkPassword(plainPassword: string): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, this.password);
+  }
 }
