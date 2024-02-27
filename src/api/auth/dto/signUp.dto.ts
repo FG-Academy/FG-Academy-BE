@@ -1,24 +1,23 @@
 import {
+  IsDateString,
   IsDefined,
   IsEmail,
   IsNotEmpty,
   IsNumber,
-  Min,
   MinLength,
   Validate,
 } from 'class-validator';
 import { IsUserAlreadyExist } from 'src/api/users/validator/isUserAlreadyExist.validator';
 
-export class RegisterUserDto {
+export class SignUpDto {
   @IsDefined()
   @IsNotEmpty()
   name: string;
 
   @IsDefined()
   @IsNotEmpty()
-  birth: string;
-
-  // id: string;
+  @IsDateString()
+  birthDate: string;
 
   @IsDefined()
   @IsNotEmpty()
@@ -28,34 +27,28 @@ export class RegisterUserDto {
 
   @IsDefined()
   @IsNotEmpty()
-  @IsNotEmpty()
   @MinLength(8)
   password: string;
 
   @IsDefined()
-  @IsNotEmpty()
   @IsNotEmpty()
   @MinLength(10)
   phoneNumber: string;
 
   @IsDefined()
   @IsNotEmpty()
-  @IsNotEmpty()
   churchName: string;
 
   @IsDefined()
   @IsNotEmpty()
-  @IsNotEmpty()
   departmentName: string;
 
   @IsDefined()
-  @IsNotEmpty()
   @IsNotEmpty()
   position: string;
 
   @IsDefined()
   @IsNotEmpty()
   @IsNumber()
-  @Min(1)
-  yearOfService: number;
+  yearsOfService: number;
 }

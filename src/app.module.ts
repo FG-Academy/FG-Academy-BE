@@ -7,6 +7,7 @@ import { TypeOrmConfig } from './config/typeorm.config';
 import { AuthModule } from './api/auth/auth.module';
 import { UsersModule } from './api/users/users.module';
 import { LoggerMiddleware } from './utils/logger.middleware';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -16,6 +17,9 @@ import { LoggerMiddleware } from './utils/logger.middleware';
     TypeOrmModule.forRootAsync(TypeOrmConfig),
     AuthModule,
     UsersModule,
+    CacheModule.register({
+      isGlobal: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
