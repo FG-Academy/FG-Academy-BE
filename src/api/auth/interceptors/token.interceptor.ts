@@ -22,19 +22,11 @@ export class TokenInterceptor implements NestInterceptor {
       tap((data) => {
         const response = context.switchToHttp().getResponse<Response>();
 
-        // if (data.accessToken) {
-        //   response.cookie('accessToken', data.accessToken, {
-        //     httpOnly: true,
-        //     // sameSite: 'lax',
-        //     secure: process.env.NODE_ENVIRONMENT === 'production', // HTTPS 환경에서만 사용하도록 설정 (개발 환경에 따라 주석 처리)
-        //   });
-        // }
-
-        // refresh_token이 존재할 때만 쿠키에 설정
         if (data.refreshToken) {
           response.cookie('refreshToken', data.refreshToken, {
             httpOnly: true,
             // sameSite: 'lax',
+            // domain: 'localhost',
             secure: process.env.NODE_ENVIRONMENT === 'production', // HTTPS 환경에서만 사용하도록 설정 (개발 환경에 따라 주석 처리)
           });
         }

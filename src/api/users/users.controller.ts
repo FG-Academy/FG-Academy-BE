@@ -4,9 +4,9 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-  @Get()
   @HttpCode(200)
+  @Get()
   findAll() {
-    return 'asdf';
+    return { message: 'Success' };
   }
 }
