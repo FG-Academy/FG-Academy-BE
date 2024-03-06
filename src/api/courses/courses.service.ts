@@ -19,4 +19,8 @@ export class CoursesService {
 
     return { message: 'Success' };
   }
+
+  async findAll(): Promise<Course[]> {
+    return await this.courseRepository.find();
+  }
 }
