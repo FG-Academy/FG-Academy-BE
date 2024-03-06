@@ -8,6 +8,7 @@ import { AuthModule } from './api/auth/auth.module';
 import { UsersModule } from './api/users/users.module';
 import { LoggerMiddleware } from './utils/logger.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
+import { CoursesModule } from './api/courses/courses.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     CacheModule.register({
       isGlobal: true,
     }),
+    CoursesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
