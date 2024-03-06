@@ -12,8 +12,14 @@ export class CoursesService {
   ) {}
 
   async createCourse(createCourseDto: CreateCourseDto) {
-    const newCourseData = this.courseRepository.create(createCourseDto);
-    console.log(newCourseData);
+    const { thumbnailImage, ...courseData } = createCourseDto;
+
+    createCourseDto.thumbnailImage = thumbnailImage;
+
+    const newCourseData = this.courseRepository.create({
+      thumbnailImagePath: thumbnailImage[0].path,
+      ...courseData,
+    });
 
     await this.courseRepository.save(newCourseData);
 

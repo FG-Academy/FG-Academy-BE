@@ -8,6 +8,9 @@ export class Course {
   @PrimaryGeneratedColumn()
   courseId: number;
 
+  @Column({ comment: '썸네일 이미지 경로' })
+  thumbnailImagePath: string;
+
   @Column({ length: 100 })
   title: string;
 
