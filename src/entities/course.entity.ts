@@ -8,7 +8,7 @@ export class Course {
   @PrimaryGeneratedColumn()
   courseId: number;
 
-  @Column({ comment: '썸네일 이미지 경로' })
+  @Column({ comment: '썸네일 이미지 경로', length: 255, nullable: true })
   thumbnailImagePath: string;
 
   @Column({ length: 100 })

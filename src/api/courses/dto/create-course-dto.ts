@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional } from 'class-validator';
 import {
-  MemoryStoredFile,
+  FileSystemStoredFile,
   HasMimeType,
   IsFiles,
   MaxFileSize,
@@ -17,7 +17,7 @@ export class CreateCourseDto {
       return `error: ${e.constraints}`;
     },
   })
-  thumbnailImage: MemoryStoredFile;
+  thumbnailImage: FileSystemStoredFile;
 
   @IsNotEmpty()
   title: string;
