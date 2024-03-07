@@ -8,6 +8,8 @@ import { AuthModule } from './api/auth/auth.module';
 import { UsersModule } from './api/users/users.module';
 import { LoggerMiddleware } from './utils/logger.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
+import { CoursesModule } from './api/courses/courses.module';
+import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
 
 @Module({
   imports: [
@@ -18,6 +20,11 @@ import { CacheModule } from '@nestjs/cache-manager';
     AuthModule,
     UsersModule,
     CacheModule.register({
+      isGlobal: true,
+    }),
+    CoursesModule,
+    NestjsFormDataModule.config({
+      storage: FileSystemStoredFile,
       isGlobal: true,
     }),
   ],

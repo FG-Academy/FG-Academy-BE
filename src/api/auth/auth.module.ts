@@ -12,7 +12,7 @@ import { JwtRefreshStrategy } from './strategies/jwtRefresh.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { HttpModule } from '@nestjs/axios';
-import { KakaoStrategy } from './strategies/kakao.strategy';
+// import { KakaoStrategy } from './strategies/kakao.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JWTAuthGuard } from './guards/jwtAuth.guard';
 
@@ -38,7 +38,7 @@ import { JWTAuthGuard } from './guards/jwtAuth.guard';
     JwtStrategy,
     RefreshTokenIdsStorage,
     JwtRefreshStrategy,
-    KakaoStrategy,
+    // KakaoStrategy,
     {
       provide: APP_GUARD,
       useClass: JWTAuthGuard,
