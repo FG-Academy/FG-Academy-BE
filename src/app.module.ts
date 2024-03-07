@@ -9,6 +9,7 @@ import { UsersModule } from './api/users/users.module';
 import { LoggerMiddleware } from './utils/logger.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CoursesModule } from './api/courses/courses.module';
+import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
 
 @Module({
   imports: [
@@ -22,6 +23,10 @@ import { CoursesModule } from './api/courses/courses.module';
       isGlobal: true,
     }),
     CoursesModule,
+    NestjsFormDataModule.config({
+      storage: FileSystemStoredFile,
+      isGlobal: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

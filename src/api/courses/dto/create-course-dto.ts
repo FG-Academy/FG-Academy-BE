@@ -2,17 +2,15 @@ import { IsNotEmpty, IsOptional } from 'class-validator';
 import {
   FileSystemStoredFile,
   HasMimeType,
-  IsFiles,
+  IsFile,
   MaxFileSize,
 } from 'nestjs-form-data';
 export class CreateCourseDto {
-  @IsFiles({ each: true })
+  @IsFile()
   @MaxFileSize(2e7, {
-    each: true,
     message: '파일의 최대 사이즈는 20MB입니다',
   })
   @HasMimeType(['image/png', 'image/jpeg', 'image/jpg'], {
-    each: true,
     message: (e) => {
       return `error: ${e.constraints}`;
     },

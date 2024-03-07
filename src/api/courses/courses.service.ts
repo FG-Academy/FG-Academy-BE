@@ -17,9 +17,12 @@ export class CoursesService {
     createCourseDto.thumbnailImage = thumbnailImage;
 
     const newCourseData = this.courseRepository.create({
-      thumbnailImagePath: thumbnailImage[0].path,
+      thumbnailImagePath: thumbnailImage.path,
       ...courseData,
     });
+
+    console.log(typeof thumbnailImage.path);
+    console.log(newCourseData);
 
     await this.courseRepository.save(newCourseData);
 
