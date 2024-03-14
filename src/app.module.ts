@@ -10,6 +10,7 @@ import { LoggerMiddleware } from './utils/logger.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CoursesModule } from './api/courses/courses.module';
 import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
+import { LecturesModule } from './api/lectures/lectures.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
       storage: FileSystemStoredFile,
       isGlobal: true,
     }),
+    LecturesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

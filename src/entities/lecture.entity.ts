@@ -16,6 +16,9 @@ export class Lecture {
   lectureId: number;
 
   @Column()
+  courseId: number;
+
+  @Column()
   lectureNumber: number;
 
   @Column({ length: 100 })
