@@ -1,15 +1,30 @@
-import { Controller, HttpCode, Get, Body, Post } from '@nestjs/common';
+import {
+  Controller,
+  HttpCode,
+  Get,
+  Body,
+  Post,
+  Req,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateLectureRecordDto } from './dto/update-lectureRecord.dto';
 import { Public } from '../auth/decorators/public.decorator';
+import { LocalAuthGuard } from '../auth/guards/localAuth.guard';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
   @HttpCode(200)
-  @Get()
-  findAll() {
-    return { message: 'Success' };
+  @Get('/profile')
+  getProfile(@Request() req) {
+    // 주요 정보 제외하고 resultData에 회원정보를 담아서 전송
+    const { password, refreshToken, createdAt, updatedAt, ...resultData } =
+      req.user;
+
+    return resultData;
   }
 
   @Public()
