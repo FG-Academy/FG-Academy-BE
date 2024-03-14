@@ -10,12 +10,15 @@ import { EntityNotFoundError, FindOneOptions, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
+import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>, // UserRepository 주입
+    @InjectRepository(LectureTimeRecord)
+    private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
   ) {}
 
   async create(data: SignUpDto): Promise<User> {
@@ -43,5 +46,28 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async saveMinutes(minutes: number, userId: number, lectureId: number) {
+    // const result = await this.lectureTimeRecordRepository.update(
+    //   {
+    //     lectureId,
+    //     userId,
+    //   },
+    //   {
+    //     playTime: minutes,
+    //   },
+    // );
+    const newRecord = await this.lectureTimeRecordRepository.create({
+      lectureId,
+      userId,
+      playTime: minutes,
+    });
+    const result = await this.lectureTimeRecordRepository.upsert(newRecord, [
+      'lectureId',
+      'userId',
+    ]);
+
+    return true;
   }
 }

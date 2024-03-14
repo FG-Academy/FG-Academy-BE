@@ -9,11 +9,15 @@ import {
 import { Course } from './course.entity';
 import { Quiz } from './quiz.entity';
 import { LectureTimeRecord } from './lectureTimeRecord.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Lecture {
   @PrimaryGeneratedColumn()
   lectureId: number;
+
+  @Column()
+  courseId: number;
 
   @Column()
   lectureNumber: number;
@@ -27,12 +31,15 @@ export class Lecture {
   @Column('text', { nullable: true })
   attachmentFile: string;
 
+  @Exclude()
   @Column({ length: 20, default: 'active' })
   status: string;
 
+  @Exclude()
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
+  @Exclude()
   @Column({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',

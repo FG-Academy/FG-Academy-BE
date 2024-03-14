@@ -20,7 +20,7 @@ export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
     username: configService.get('DB_USER'),
     password: configService.get('DB_PASSWORD'),
     database: configService.get('DB_NAME'),
-    synchronize: false,
+    synchronize: true,
     logging: true,
     entities: [
       User,

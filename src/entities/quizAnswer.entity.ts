@@ -12,13 +12,16 @@ export class QuizAnswer {
   @PrimaryGeneratedColumn()
   id: number; // 복합 키 대신 단일 ID 사용
 
-  @Column()
+  @Column({ comment: '항목 번호' })
   itemIndex: number;
 
-  @Column({ length: 20 })
+  @Column({ comment: '퀴즈id' })
+  quizId: number;
+
+  @Column({ length: 20, comment: '항목' })
   item: string;
 
-  @Column()
+  @Column({ comment: '정답 여부' })
   isAnswer: boolean;
 
   @Column({ length: 10, nullable: true })
