@@ -27,7 +27,7 @@ import { JWTAuthGuard } from './guards/jwtAuth.guard';
       global: true,
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' },
+        signOptions: { expiresIn: '10h' },
       }),
     }),
   ],
