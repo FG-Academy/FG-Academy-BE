@@ -16,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
+import { UpdateCompletedDto } from './dto/update-completed.dto';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { throwError } from 'rxjs';
 
@@ -80,6 +81,19 @@ export class UsersService {
     ]);
 
     return true;
+  }
+
+  async updateCompleted(userId: number, lectureId: number) {
+    const result = await this.lectureTimeRecordRepository.update(
+      {
+        userId,
+        lectureId,
+      },
+      {
+        status: true,
+      },
+    );
+    return result;
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {

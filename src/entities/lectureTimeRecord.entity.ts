@@ -23,8 +23,8 @@ export class LectureTimeRecord {
   @Column()
   playTime: number;
 
-  @Column({ length: 10, nullable: true })
-  status: string;
+  @Column({ default: false })
+  status: boolean;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
