@@ -83,10 +83,6 @@ export class UsersService {
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
       // const newUserInfo = await this.usersRepository.create(data);
       const userInfo = await this.usersRepository.update(
@@ -94,20 +90,13 @@ export class UsersService {
         { ...data },
       );
     } catch (err) {
-      await queryRunner.rollbackTransaction();
       throw new Error();
-    } finally {
-      await queryRunner.release();
     }
 
     return { message: 'Success' };
   }
 
   async deleteUserInfo(userId: number) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
       // const newUserInfo = await this.usersRepository.create(data);
       const deleteUserInfo = await this.usersRepository.update(
@@ -115,10 +104,7 @@ export class UsersService {
         { status: 'delete' },
       );
     } catch (err) {
-      await queryRunner.rollbackTransaction();
       throw new Error();
-    } finally {
-      await queryRunner.release();
     }
 
     return { message: 'Success' };
