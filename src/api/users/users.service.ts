@@ -39,8 +39,11 @@ export class UsersService {
     const user = await this.usersRepository.findOne({
       where: {
         nameBirthId,
+        status: 'active',
       },
     });
+
+    console.log(user);
     return user;
   }
 
@@ -86,12 +89,36 @@ export class UsersService {
 
     try {
       // const newUserInfo = await this.usersRepository.create(data);
-      const userUserInfo = await this.usersRepository.update(
+      const userInfo = await this.usersRepository.update(
         { userId: userId },
         { ...data },
       );
     } catch (err) {
+      await queryRunner.rollbackTransaction();
       throw new Error();
+    } finally {
+      await queryRunner.release();
+    }
+
+    return { message: 'Success' };
+  }
+
+  async deleteUserInfo(userId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // const newUserInfo = await this.usersRepository.create(data);
+      const deleteUserInfo = await this.usersRepository.update(
+        { userId: userId },
+        { status: 'delete' },
+      );
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw new Error();
+    } finally {
+      await queryRunner.release();
     }
 
     return { message: 'Success' };

@@ -1,4 +1,12 @@
-import { Controller, HttpCode, Get, Body, Post, Request } from '@nestjs/common';
+import {
+  Controller,
+  HttpCode,
+  Get,
+  Body,
+  Post,
+  Request,
+  Delete,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateLectureRecordDto } from './dto/update-lectureRecord.dto';
 import { Public } from '../auth/decorators/public.decorator';
@@ -23,6 +31,13 @@ export class UsersController {
     console.log(dto);
     console.log(req.user.userId);
     const result = await this.usersService.updateDB(dto, req.user.userId);
+    return result;
+  }
+
+  @Delete('/profile')
+  async deleteUserInfo(@Request() req) {
+    const result = await this.usersService.deleteUserInfo(req.user.userId);
+
     return result;
   }
 
