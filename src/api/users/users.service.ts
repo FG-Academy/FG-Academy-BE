@@ -6,11 +6,18 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundError, FindOneOptions, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityNotFoundError,
+  FindOneOptions,
+  Repository,
+} from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
+import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +26,7 @@ export class UsersService {
     private usersRepository: Repository<User>, // UserRepository 주입
     @InjectRepository(LectureTimeRecord)
     private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
+    private dataSource: DataSource,
   ) {}
 
   async create(data: SignUpDto): Promise<User> {
@@ -69,5 +77,23 @@ export class UsersService {
     ]);
 
     return true;
+  }
+
+  async updateDB(data: UpdateUserDto, userId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // const newUserInfo = await this.usersRepository.create(data);
+      const userUserInfo = await this.usersRepository.update(
+        { userId: userId },
+        { ...data },
+      );
+    } catch (err) {
+      throw new Error();
+    }
+
+    return { message: 'Success' };
   }
 }
