@@ -6,12 +6,15 @@ import {
   Post,
   Request,
   Delete,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateLectureRecordDto } from './dto/update-lectureRecord.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 
+@Public()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -46,5 +49,14 @@ export class UsersController {
   async saveMinutes(@Body() dto: UpdateLectureRecordDto) {
     await this.usersService.saveMinutes(dto.minutes, dto.userId, dto.lectureId);
     return { message: 'Successfully saved playtime' };
+  }
+
+  @Patch(':userId/completed')
+  async updateCompleted(
+    @Param('userId') userId: number,
+    @Body('lectureId') lectureId: number,
+  ) {
+    await this.usersService.updateCompleted(userId, lectureId);
+    return { message: 'Successfully updated completed status' };
   }
 }

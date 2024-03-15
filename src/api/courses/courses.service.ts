@@ -79,11 +79,12 @@ export class CoursesService {
         'lectures',
         'lectures.quizzes',
         'lectures.lectureTimeRecords',
+        'lectures.quizzes.quizSubmits',
       ],
       where: { courseId },
     });
 
-    console.log(course);
+    // console.log(course);
 
     return course.lectures;
   }
@@ -112,19 +113,23 @@ export class CoursesService {
   async getLecturesProgress(courseId: number, userId: number) {
     const lectures = await this.lectureRepository.find({
       where: { course: { courseId } },
-      relations: ['lectureTimeRecords'],
+      relations: ['lectureTimeRecords', 'quizzes.quizSubmits'],
     });
 
+    // console.log(lectures[0].quizzes);
+
     const lectureProgresses = lectures.map((lecture) => {
-      console.log(lecture);
+      // console.log(lecture);
       const progress = lecture.lectureTimeRecords.find(
         (lp) => lp.userId === userId,
       );
-      console.log(progress);
+      // console.log(progress);
+
       return {
         lectureId: lecture.lectureId,
         lectureNumber: lecture.lectureNumber,
         completed: progress ? progress.status : false,
+        // quizCompleted:
         progress: progress ? progress.playTime : 0,
       };
     });
