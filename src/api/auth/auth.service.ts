@@ -46,12 +46,16 @@ export class AuthService {
     };
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '14d',
+      expiresIn: '30d',
     });
 
     await this.refreshTokenIdsStorage.insert(user.userId, refreshToken);
 
     return {
+      id: user.userId,
+      email: user.email,
+      name: user.name,
+      expiresIn: 24 * 60 * 60,
       accessToken,
       refreshToken,
     };
@@ -72,7 +76,7 @@ export class AuthService {
   async refreshAccessToken(
     refreshToken: string,
     user: User,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<{ accessToken: string; expiresIn: number }> {
     const isValid = await this.refreshTokenIdsStorage.validate(
       user.userId,
       refreshToken,
@@ -86,7 +90,7 @@ export class AuthService {
       email: user.email,
     };
     const accessToken = await this.jwtService.signAsync(payload);
-    return { accessToken };
+    return { accessToken, expiresIn: 24 * 60 * 60 };
   }
 
   async invalidateToken(refreshToken: string): Promise<void> {

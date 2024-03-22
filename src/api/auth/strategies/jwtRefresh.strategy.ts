@@ -28,6 +28,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(payload: JwtPayload): Promise<any> {
+    console.log('payload', payload);
     return this.authService.verifyPayload(payload);
   }
 }

@@ -44,7 +44,7 @@ export class AuthController {
 
   @Public()
   @UseGuards(JwtRefreshTokenGuard)
-  @UseInterceptors(TokenInterceptor)
+  // @UseInterceptors(TokenInterceptor)
   @Get('refresh-token')
   async refreshToken(@Req() request: Request) {
     const refreshToken = request.cookies['refreshToken'];
