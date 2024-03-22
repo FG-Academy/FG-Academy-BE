@@ -23,10 +23,11 @@ export class TokenInterceptor implements NestInterceptor {
         const response = context.switchToHttp().getResponse<Response>();
 
         if (data.refreshToken) {
+          console.log('refresh 설정');
           response.cookie('refreshToken', data.refreshToken, {
             httpOnly: true,
-            // sameSite: 'lax',
-            // domain: 'localhost',
+            sameSite: 'lax',
+            domain: 'localhost',
             secure: process.env.NODE_ENVIRONMENT === 'production', // HTTPS 환경에서만 사용하도록 설정 (개발 환경에 따라 주석 처리)
           });
         }

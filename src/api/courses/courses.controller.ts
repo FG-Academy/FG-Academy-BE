@@ -4,15 +4,16 @@ import {
   Get,
   Param,
   Post,
-  Query,
+  // Query,
   //   UseInterceptors,
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
 import { CreateLectureDto } from './dto/create-lecture.dto';
+import { AuthUser } from '../users/decorators/user.decorators';
 import { Public } from '../auth/decorators/public.decorator';
-@Public()
+
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
@@ -26,6 +27,7 @@ export class CoursesController {
     return this.coursesService.createCourse(createCourseDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.coursesService.findAll();
@@ -48,19 +50,21 @@ export class CoursesController {
     return { message: 'Lectures created successfully' };
   }
 
-  @Public()
   @Get(':courseId/lectures')
   async findAllLecturesByCourseId(@Param('courseId') courseId: number) {
     const data = await this.coursesService.getAllLecturesByCourseId(courseId);
     return data;
   }
 
-  @Public()
+  // @Public()
   @Get(':courseId/lectures/progress')
   getLecturesProgress(
     @Param('courseId') courseId: number,
-    @Query('userId') userId: number,
+    // @Query('userId') userId: number,
+    @AuthUser() user,
   ) {
+    console.log('user', user);
+    const userId = 1;
     return this.coursesService.getLecturesProgress(courseId, userId);
   }
 }
