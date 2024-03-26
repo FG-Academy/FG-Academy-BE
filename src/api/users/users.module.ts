@@ -5,9 +5,28 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { IsUserAlreadyExist } from './validator/isUserAlreadyExist.validator';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
+import { MailerModule } from '@nestjs-modules/mailer';
+// import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, LectureTimeRecord])],
+  imports: [
+    TypeOrmModule.forFeature([User, LectureTimeRecord]),
+    MailerModule.forRootAsync({
+      useFactory: () => ({
+        transport: {
+          host: 'smtp.naver.com',
+          port: 587,
+          auth: {
+            user: process.env.EMAILADDRESS,
+            pass: process.env.EMAILPASSWORD,
+          },
+        },
+        defaults: {
+          from: `"꽃동산아카데미" ${process.env.EMAILADDRESS}`,
+        },
+      }),
+    }),
+  ],
   controllers: [UsersController],
   providers: [UsersService, IsUserAlreadyExist],
   exports: [UsersService],
