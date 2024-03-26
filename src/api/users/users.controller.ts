@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import {
   Controller,
   HttpCode,
@@ -8,11 +10,14 @@ import {
   Delete,
   Patch,
   Param,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateLectureRecordDto } from './dto/update-lectureRecord.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { EmailDto } from './dto/email.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Public()
 @Controller('users')
@@ -42,6 +47,27 @@ export class UsersController {
     const result = await this.usersService.deleteUserInfo(req.user.userId);
 
     return result;
+  }
+
+  @Post('email')
+  async findEmailExist(@Body() emailDto: EmailDto) {
+    const result = await this.usersService.findEmailExist(emailDto.email);
+    if (!result) return false;
+    return true;
+  }
+
+  @Public()
+  @Get('email')
+  async sendEmail(@Query('email') email: string) {
+    const result = await this.usersService.sendEmail(email);
+    return { code: result };
+  }
+
+  @Public()
+  @Patch('password')
+  async updatePassword(@Body() updatePasswordDto: UpdatePasswordDto) {
+    const result = await this.usersService.updatePassword(updatePasswordDto);
+    return { message: '비밀번호를 성공적으로 변경했습니다.' };
   }
 
   @Public()
