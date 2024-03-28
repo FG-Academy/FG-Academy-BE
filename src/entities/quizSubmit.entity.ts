@@ -16,14 +16,17 @@ export class QuizSubmit {
   @Column()
   userId: number;
 
+  @Column({ comment: '객관식 답안 제출' })
+  multipleAnswer: number;
+
   @Column('text', { nullable: true })
   submittedAnswer: string;
 
   @Column('text', { nullable: true })
   feedbackComment: string;
 
-  @Column({ default: false })
-  status: boolean;
+  @Column({ default: false, comment: '0: 미채점 / 1: 정답 / 2: 오답' })
+  status: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

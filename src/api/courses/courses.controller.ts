@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Request,
   // Query,
   //   UseInterceptors,
 } from '@nestjs/common';
@@ -51,8 +52,15 @@ export class CoursesController {
   }
 
   @Get(':courseId/lectures')
-  async findAllLecturesByCourseId(@Param('courseId') courseId: number) {
-    const data = await this.coursesService.getAllLecturesByCourseId(courseId);
+  async findAllLecturesByCourseId(
+    @Param('courseId') courseId: number,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    const data = await this.coursesService.getAllLecturesByCourseId(
+      courseId,
+      userId,
+    );
     return data;
   }
 
