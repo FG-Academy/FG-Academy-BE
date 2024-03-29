@@ -19,7 +19,7 @@ import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 
-@Public()
+// @Public()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

@@ -72,17 +72,32 @@ export class CoursesService {
     return true;
   }
 
-  async getAllLecturesByCourseId(courseId: number): Promise<any> {
-    const course = await this.courseRepository.findOne({
-      // select: { courseId: true },
-      relations: [
-        'lectures',
-        'lectures.quizzes',
-        'lectures.lectureTimeRecords',
-        'lectures.quizzes.quizSubmits',
-      ],
-      where: { courseId },
-    });
+  async getAllLecturesByCourseId(
+    courseId: number,
+    userId: number,
+  ): Promise<any> {
+    const course = await this.courseRepository
+      .createQueryBuilder('course')
+      .leftJoinAndSelect('course.lectures', 'lecture')
+      .leftJoinAndSelect('lecture.quizzes', 'quiz')
+      .leftJoinAndSelect('quiz.quizAnswers', 'quizAnswer')
+      .leftJoinAndSelect(
+        'quiz.quizSubmits',
+        'quizSubmit',
+        'quizSubmit.userId = :userId',
+        { userId },
+      )
+      .leftJoinAndSelect(
+        'lecture.lectureTimeRecords',
+        'lectureTimeRecord',
+        'lectureTimeRecord.userId = :userId',
+        { userId },
+      )
+      .where('course.courseId = :courseId', { courseId })
+      .orderBy('lecture.lectureNumber', 'ASC')
+      .addOrderBy('quiz.quizId', 'ASC')
+      .addOrderBy('quizAnswer.id', 'ASC')
+      .getOne();
 
     // console.log(course);
 
