@@ -1,16 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Request,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { QuizzesService } from './quizzes.service';
-import { Public } from '../auth/decorators/public.decorator';
+// import { Public } from '../auth/decorators/public.decorator';
 import { CreateQuizAnswerDto } from './dto/create-quizAnswr.dto';
+import { AuthUser } from '../users/decorators/user.decorators';
 
 @Controller('quizzes')
 export class QuizzesController {
@@ -26,10 +19,10 @@ export class QuizzesController {
   @Get(':courseId')
   findAll(
     @Param('courseId') courseId: number,
-    @Request() req,
+    @AuthUser() user,
     // @Query('userId') userId: number,
   ) {
-    const userId = req.user.userId;
+    const userId = user.userId;
     return this.quizzesService.findAllByCourseId(courseId, userId);
   }
 
@@ -38,9 +31,9 @@ export class QuizzesController {
   findGetQuiz(
     @Param('courseId') courseId: number,
     @Param('lectureId') lectureId: number,
-    @Request() req,
+    @AuthUser() user,
   ) {
-    const userId = req.user.userId;
+    const userId = user.userId;
     return this.quizzesService.findAllLectureQuiz(courseId, lectureId, userId);
   }
 
@@ -48,13 +41,11 @@ export class QuizzesController {
   saveUserQuizAnswer(
     @Param('courseId') courseId: number,
     @Param('lectureId') lectureId: number,
-    @Request() req,
+    @AuthUser() user,
     @Body() data: CreateQuizAnswerDto,
   ) {
-    const userId = req.user.userId;
-    console.log(userId);
-    console.log(req.user);
-    console.log(data);
+    const userId = user.userId;
+
     return this.quizzesService.saveUserAnswer(
       courseId,
       lectureId,

@@ -4,7 +4,7 @@ import {
   Get,
   Param,
   Post,
-  Request,
+  // Request,
   // Query,
   //   UseInterceptors,
 } from '@nestjs/common';
@@ -54,9 +54,9 @@ export class CoursesController {
   @Get(':courseId/lectures')
   async findAllLecturesByCourseId(
     @Param('courseId') courseId: number,
-    @Request() req,
+    @AuthUser() user,
   ) {
-    const userId = req.user.userId;
+    const userId = user.userId;
     const data = await this.coursesService.getAllLecturesByCourseId(
       courseId,
       userId,
@@ -71,8 +71,7 @@ export class CoursesController {
     // @Query('userId') userId: number,
     @AuthUser() user,
   ) {
-    console.log('user', user);
-    const userId = 1;
+    const userId = user.userId;
     return this.coursesService.getLecturesProgress(courseId, userId);
   }
 }
