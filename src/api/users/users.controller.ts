@@ -6,11 +6,11 @@ import {
   Get,
   Body,
   Post,
-  Request,
   Delete,
   Patch,
   Param,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateLectureRecordDto } from './dto/update-lectureRecord.dto';
@@ -18,24 +18,53 @@ import { Public } from '../auth/decorators/public.decorator';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { Request } from 'express';
+import { AuthUser } from './decorators/user.decorators';
 
-// @Public()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get()
+  async findPage(@Query() query) {
+    if (query.page) {
+      return await this.usersService.findPage(query.page);
+    } else if (query.name) {
+      return await this.usersService.findByName(query.name);
+    }
+    return await this.usersService.findAll();
+  }
+
+  @Get('sdf')
+  getsdf() {
+    console.log('sdf');
+  }
+
   @HttpCode(200)
   @Get('/profile')
-  getProfile(@Request() req) {
+  async getProfile(@AuthUser() user) {
+    // console.log(user);
     // 주요 정보 제외하고 resultData에 회원정보를 담아서 전송
-    const { password, refreshToken, createdAt, updatedAt, ...resultData } =
-      req.user;
+    const { password, refreshToken, ...resultData } = user;
 
     return resultData;
   }
 
+  @Get(':userId')
+  async findOneByUserId(@Param('userId') userId: number) {
+    return await this.usersService.findOneByUserId({ where: { userId } });
+  }
+
+  @Patch(':userId')
+  async updateOneByUserId(
+    @Body() dto: UpdateUserDto,
+    @Param('userId') userId: number,
+  ) {
+    return await this.usersService.updateDB(dto, userId);
+  }
+
   @Post('/profile')
-  async updateUserInfo(@Body() dto: UpdateUserDto, @Request() req) {
+  async updateUserInfo(@Body() dto: UpdateUserDto, @Req() req) {
     console.log(dto);
     console.log(req.user.userId);
     const result = await this.usersService.updateDB(dto, req.user.userId);
@@ -43,7 +72,7 @@ export class UsersController {
   }
 
   @Delete('/profile')
-  async deleteUserInfo(@Request() req) {
+  async deleteUserInfo(@Req() req) {
     const result = await this.usersService.deleteUserInfo(req.user.userId);
 
     return result;
