@@ -35,11 +35,6 @@ export class UsersController {
     return await this.usersService.findAll();
   }
 
-  @Get('sdf')
-  getsdf() {
-    console.log('sdf');
-  }
-
   @HttpCode(200)
   @Get('/profile')
   async getProfile(@AuthUser() user) {
