@@ -4,24 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  EntityNotFoundError,
-  FindOneOptions,
-  Repository,
-} from 'typeorm';
+import { DataSource, FindOneOptions, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
-import { UpdateCompletedDto } from './dto/update-completed.dto';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
-import { throwError } from 'rxjs';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { v4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -33,6 +26,48 @@ export class UsersService {
     private dataSource: DataSource,
     private readonly mailerService: MailerService,
   ) {}
+
+  async findAll() {
+    const [users, count] = await this.usersRepository.findAndCount();
+    const usersForResponse = users.map((user) => instanceToPlain(user));
+    return {
+      users: usersForResponse,
+      count,
+    };
+  }
+
+  async findByName(name: string) {
+    const users = await this.usersRepository.find({
+      where: {
+        name,
+      },
+    });
+    if (!users) {
+      throw new NotFoundException('User not found');
+    }
+
+    const { count } = await this.findAll();
+    return {
+      users: instanceToPlain(users),
+      count,
+    };
+  }
+
+  async findPage(page: number) {
+    const take = 10; // 한 페이지 당 아이템 수
+    const skip = (page - 1) * take; // 건너뛸 아이템 수 계산
+
+    const users = await this.usersRepository.find({
+      take: take,
+      skip: skip,
+    });
+
+    const { count } = await this.findAll();
+    return {
+      users: instanceToPlain(users),
+      count,
+    };
+  }
 
   async create(data: SignUpDto): Promise<User> {
     const user = this.usersRepository.create(data);
@@ -52,7 +87,7 @@ export class UsersService {
     return user;
   }
 
-  async findOne(where: FindOneOptions<User>): Promise<User> {
+  async findOne(where: FindOneOptions<User>) {
     const user = await this.usersRepository.findOne(where);
 
     if (!user) {
@@ -62,6 +97,18 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async findOneByUserId(where: FindOneOptions<User>) {
+    const user = await this.usersRepository.findOne(where);
+
+    if (!user) {
+      throw new NotFoundException(
+        `There isn't any user with identifier: ${where}`,
+      );
+    }
+
+    return instanceToPlain(user);
   }
 
   async saveMinutes(minutes: number, userId: number, lectureId: number) {
