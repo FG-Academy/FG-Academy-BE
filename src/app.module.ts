@@ -11,6 +11,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CoursesModule } from './api/courses/courses.module';
 import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
 import { QuizzesModule } from './api/quizzes/quizzes.module';
+import { DashboardModule } from './api/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { QuizzesModule } from './api/quizzes/quizzes.module';
       storage: FileSystemStoredFile,
       isGlobal: true,
     }),
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -135,6 +137,18 @@ export class UsersService {
   }
 
   async updateCompleted(userId: number, lectureId: number) {
+    // 예외처리를 잘 해야할 듯 하다.
+    const isExist = await this.lectureTimeRecordRepository.findOne({
+      where: { user: { userId }, lecture: { lectureId } },
+    });
+
+    if (!isExist) {
+      throw new HttpException(
+        '수강한 적이 없는 강의입니다.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const result = await this.lectureTimeRecordRepository.update(
       {
         userId,

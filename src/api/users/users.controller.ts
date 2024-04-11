@@ -18,7 +18,6 @@ import { Public } from '../auth/decorators/public.decorator';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { Request } from 'express';
 import { AuthUser } from './decorators/user.decorators';
 
 @Controller('users')
@@ -94,18 +93,22 @@ export class UsersController {
     return { message: '비밀번호를 성공적으로 변경했습니다.' };
   }
 
-  @Public()
+  // 사용자가 강의를 수강할 때 시간을 저장하는 API
   @Post('/save-lecture-record')
-  async saveMinutes(@Body() dto: UpdateLectureRecordDto) {
-    await this.usersService.saveMinutes(dto.minutes, dto.userId, dto.lectureId);
+  async saveMinutes(@Body() dto: UpdateLectureRecordDto, @AuthUser() user) {
+    const userId = user.userId;
+    await this.usersService.saveMinutes(dto.minutes, userId, dto.lectureId);
     return { message: 'Successfully saved playtime' };
   }
-
-  @Patch(':userId/completed')
+  // 사용자가 한 강의의 수강이 끝나면 해당 API가 작동해서 수강 완료 여부를 입력함
+  // 강의 수강 완료 시에, 해당 API가 작동해서 강의 완료 여부를 판독할 수 있도록 해야함
+  @Patch('/completed')
   async updateCompleted(
-    @Param('userId') userId: number,
     @Body('lectureId') lectureId: number,
+    @AuthUser() user,
   ) {
+    const userId = user.userId;
+
     await this.usersService.updateCompleted(userId, lectureId);
     return { message: 'Successfully updated completed status' };
   }

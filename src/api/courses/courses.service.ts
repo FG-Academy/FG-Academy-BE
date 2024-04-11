@@ -1,4 +1,6 @@
 import {
+  HttpException,
+  HttpStatus,
   Injectable,
   // NotFoundException,
   UnprocessableEntityException,
@@ -9,6 +11,8 @@ import { Repository } from 'typeorm';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { Lecture } from 'src/entities/lecture.entity';
 import { CreateLectureDto } from './dto/create-lecture.dto';
+import { Enrollment } from 'src/entities/enrollment.entity';
+import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 
 @Injectable()
 export class CoursesService {
@@ -17,6 +21,10 @@ export class CoursesService {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Lecture)
     private readonly lectureRepository: Repository<Lecture>,
+    @InjectRepository(Enrollment)
+    private readonly enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(LectureTimeRecord)
+    private readonly lectureTimeRecordRepository: Repository<LectureTimeRecord>,
   ) {}
 
   async createCourse(createCourseDto: CreateCourseDto) {
@@ -158,5 +166,93 @@ export class CoursesService {
       completedCount,
       // progressPercentage: completedCount > 0 ? (completedCount / lectures.length) * 100 : 0,
     };
+  }
+
+  async enrollCourse(courseId: number, userId: number) {
+    // 이미 사용자가 해당 코스에 대해서 수강신청을 완료했는지 확인
+    const isExist = await this.enrollmentRepository.findOne({
+      where: { user: { userId }, course: { courseId } },
+    });
+    // 중복이 있으면 error
+    if (isExist) {
+      throw new HttpException(
+        '이미 수강신청한 코스입니다.',
+        HttpStatus.BAD_REQUEST,
+      );
+    } else {
+      try {
+        const enrollmentRepo = this.enrollmentRepository.create({
+          user: { userId: userId },
+          course: { courseId: courseId },
+        });
+
+        await this.enrollmentRepository.save(enrollmentRepo);
+
+        return { message: '수강신청을 성공적으로 완료했습니다!' };
+      } catch (err) {
+        throw err;
+      }
+    }
+  }
+
+  async getEnrollmentData(courseId: number, userId: number) {
+    const isCourse = await this.courseRepository.findOne({
+      where: { courseId },
+    });
+
+    if (!isCourse) {
+      throw new HttpException('잘못된 코스입니다', HttpStatus.BAD_REQUEST);
+    }
+
+    // 사용자가 수강신청을 했는지 확인
+    const isExist = await this.enrollmentRepository.findOne({
+      where: { user: { userId }, course: { courseId } },
+    });
+    // 해당 코스의 전체 강의 개수
+    const totalCourseLength = await this.lectureRepository.count({
+      where: { courseId },
+      select: { lectureId: true },
+    });
+    // 사용자가 해당 코스에서 수강완료한 강의 개수
+    const completedLectures = await this.lectureTimeRecordRepository.find({
+      where: {
+        status: true,
+        userId,
+        lecture: {
+          course: { courseId }, // 특정 코스의 강의들 중에서 수강 완료한 강의를 찾는 조건 추가
+        },
+      },
+      relations: ['lecture', 'lecture.course'], // 필요한 relation 명시
+      order: {
+        updatedAt: 'DESC', // 가장 최근에 업데이트된 순서로 정렬
+      },
+    });
+    // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
+    const lastStudyLecture = completedLectures[0];
+
+    // 코스의 전체 강의 개수
+    console.log(totalCourseLength);
+    // 코스에 포함되어 있는 수강완료한 강의 개수
+    console.log(completedLectures);
+    // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
+    console.log(lastStudyLecture?.lectureId);
+
+    // 수강신청 이력이 남아있으면 이어듣기, 아니면 수강 신청하기
+    if (isExist) {
+      return {
+        isTaking: true,
+        message: '이어듣기',
+        totalCount: totalCourseLength,
+        completedLectures: completedLectures.length,
+        lastStudyLecture: lastStudyLecture.lectureId,
+      };
+    } else
+      return {
+        isTaking: false,
+        message: '수강 신청하기',
+        totalCount: totalCourseLength,
+        completedLectures: 0,
+        lastStudyLecture: null,
+      };
   }
 }

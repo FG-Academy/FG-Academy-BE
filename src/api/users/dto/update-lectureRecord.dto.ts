@@ -5,8 +5,5 @@ export class UpdateLectureRecordDto {
   minutes: number;
 
   @IsNotEmpty()
-  userId: number;
-
-  @IsNotEmpty()
   lectureId: number;
 }
