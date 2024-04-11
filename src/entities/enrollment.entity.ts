@@ -19,7 +19,7 @@ export class Enrollment {
   //   @Column()
   //   courseId: number;
 
-  @Column()
+  @Column({ default: 0 })
   completedNumber: number;
 
   @Column({ length: 10, nullable: true })

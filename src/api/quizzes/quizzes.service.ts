@@ -31,7 +31,7 @@ export class QuizzesService {
       .leftJoinAndSelect('quiz.quizAnswers', 'quizAnswer')
       .leftJoinAndSelect('lecture.lectureTimeRecords', 'lectureTimeRecord')
       // 필요하다면 사용자에 특정한 시청 기록만 필터링
-      // .andWhere('lectureTimeRecord.userId = :userId', { userId })
+      .andWhere('lectureTimeRecord.userId = :userId', { userId })
       .where('course.courseId = :courseId', { courseId })
       .orderBy('lecture.lectureNumber', 'ASC')
       .addOrderBy('quiz.quizId', 'ASC')
