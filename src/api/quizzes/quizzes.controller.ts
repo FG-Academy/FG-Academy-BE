@@ -3,7 +3,7 @@ import { CreateQuizDto } from './dto/create-quiz.dto';
 import { QuizzesService } from './quizzes.service';
 // import { Public } from '../auth/decorators/public.decorator';
 import { CreateQuizAnswerDto } from './dto/create-quizAnswr.dto';
-import { AuthUser } from '../users/decorators/user.decorators';
+import { AuthUser } from '../users/decorators/user.decorator';
 
 @Controller('quizzes')
 export class QuizzesController {

@@ -51,7 +51,7 @@ export class Lecture {
   @JoinColumn({ name: 'courseId' })
   course: Course;
 
-  @OneToMany(() => Quiz, (quiz) => quiz.lecture)
+  @OneToMany(() => Quiz, (quiz) => quiz.lecture, { cascade: true })
   quizzes: Quiz[];
 
   @OneToMany(

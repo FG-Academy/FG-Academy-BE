@@ -20,6 +20,7 @@ async function bootstrap() {
     origin: 'http://localhost:3001',
     credentials: true,
   });
+  // app.useStaticAssets(join(__dirname, '..', 'public'));
   // app.useGlobalFilters(new GlobalExceptionFilter());
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.use(cookieParser());

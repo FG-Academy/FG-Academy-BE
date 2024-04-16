@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, FindOneOptions, Repository } from 'typeorm';
@@ -30,7 +31,9 @@ export class UsersService {
   ) {}
 
   async findAll() {
-    const [users, count] = await this.usersRepository.findAndCount();
+    const [users, count] = await this.usersRepository.findAndCount({
+      relations: ['enrollments'],
+    });
     const usersForResponse = users.map((user) => instanceToPlain(user));
     return {
       users: usersForResponse,
@@ -162,17 +165,35 @@ export class UsersService {
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {
+    console.log(data);
+    if (data.email) {
+      const user = await this.usersRepository.findOne({
+        where: {
+          userId,
+        },
+      });
+
+      const isEmailExist = await this.usersRepository.findOne({
+        where: {
+          email: data.email,
+        },
+      });
+      if (isEmailExist && user.email !== data.email) {
+        throw new HttpException(
+          '이메일이 유효하지 않습니다.',
+          HttpStatus.CONFLICT,
+        );
+        // throw new UnprocessableEntityException('이미 존재하는 이메일입니다.');
+      }
+    }
+
     try {
-      // const newUserInfo = await this.usersRepository.create(data);
-      const userInfo = await this.usersRepository.update(
-        { userId: userId },
-        { ...data },
-      );
+      await this.usersRepository.update({ userId: userId }, { ...data });
     } catch (err) {
       throw new Error();
     }
 
-    return { message: 'Success' };
+    return { message: 'Successfully update user info.' };
   }
 
   async deleteUserInfo(userId: number) {

@@ -244,7 +244,9 @@ export class CoursesService {
         message: '이어듣기',
         totalCount: totalCourseLength,
         completedLectures: completedLectures.length,
-        lastStudyLecture: lastStudyLecture.lectureId,
+        lastStudyLecture: lastStudyLecture?.lectureId
+          ? lastStudyLecture.lectureId
+          : null,
       };
     } else
       return {

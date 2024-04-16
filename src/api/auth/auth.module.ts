@@ -15,6 +15,7 @@ import { HttpModule } from '@nestjs/axios';
 // import { KakaoStrategy } from './strategies/kakao.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JWTAuthGuard } from './guards/jwtAuth.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -42,6 +43,10 @@ import { JWTAuthGuard } from './guards/jwtAuth.guard';
     {
       provide: APP_GUARD,
       useClass: JWTAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
   exports: [AuthService],

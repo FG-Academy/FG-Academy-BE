@@ -45,7 +45,7 @@ export class User {
   @Column()
   yearsOfService: number;
 
-  @Column({ length: 10, nullable: true })
+  @Column({ length: 10, default: 'L0' })
   level: string;
 
   @Column({ length: 50, nullable: true })
