@@ -9,6 +9,9 @@ export class CreateUserDto {
   email: string;
 
   @IsNotEmpty()
+  level: string;
+
+  @IsNotEmpty()
   birthDate: string;
 
   @IsNotEmpty()

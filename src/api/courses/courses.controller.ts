@@ -12,7 +12,7 @@ import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
 import { CreateLectureDto } from './dto/create-lecture.dto';
-import { AuthUser } from '../users/decorators/user.decorators';
+import { AuthUser } from '../users/decorators/user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('courses')
@@ -25,6 +25,7 @@ export class CoursesController {
   @Post()
   @FormDataRequest({ storage: FileSystemStoredFile, autoDeleteFile: false })
   create(@Body() createCourseDto: CreateCourseDto) {
+    console.log(createCourseDto);
     return this.coursesService.createCourse(createCourseDto);
   }
 

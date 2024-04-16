@@ -12,11 +12,17 @@ import { CoursesModule } from './api/courses/courses.module';
 import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
 import { QuizzesModule } from './api/quizzes/quizzes.module';
 import { DashboardModule } from './api/dashboard/dashboard.module';
+import { AdminModule } from './api/admin/admin.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
     }),
     TypeOrmModule.forRootAsync(TypeOrmConfig),
     AuthModule,
@@ -27,10 +33,12 @@ import { DashboardModule } from './api/dashboard/dashboard.module';
     CoursesModule,
     QuizzesModule,
     NestjsFormDataModule.config({
+      fileSystemStoragePath: join(__dirname, '..', 'public'),
       storage: FileSystemStoredFile,
       isGlobal: true,
     }),
     DashboardModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

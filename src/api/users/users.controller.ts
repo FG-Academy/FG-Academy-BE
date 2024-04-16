@@ -18,12 +18,14 @@ import { Public } from '../auth/decorators/public.decorator';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { AuthUser } from './decorators/user.decorators';
+import { AuthUser } from './decorators/user.decorator';
+import { Roles } from './decorators/role.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // @Roles('admin')
   @Get()
   async findPage(@Query() query) {
     if (query.page) {
@@ -44,6 +46,17 @@ export class UsersController {
     return resultData;
   }
 
+  @Post('/profile')
+  async updateUserInfo(
+    @Body() dto: UpdateUserDto,
+    @AuthUser('userId') userId: number,
+  ) {
+    console.log(dto);
+    console.log(userId);
+    const result = await this.usersService.updateDB(dto, userId);
+    return result;
+  }
+
   @Get(':userId')
   async findOneByUserId(@Param('userId') userId: number) {
     return await this.usersService.findOneByUserId({ where: { userId } });
@@ -55,14 +68,6 @@ export class UsersController {
     @Param('userId') userId: number,
   ) {
     return await this.usersService.updateDB(dto, userId);
-  }
-
-  @Post('/profile')
-  async updateUserInfo(@Body() dto: UpdateUserDto, @Req() req) {
-    console.log(dto);
-    console.log(req.user.userId);
-    const result = await this.usersService.updateDB(dto, req.user.userId);
-    return result;
   }
 
   @Delete('/profile')
