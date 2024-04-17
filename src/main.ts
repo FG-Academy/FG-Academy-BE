@@ -13,6 +13,9 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
   app.use((req, res, next) => new LoggerMiddleware().use(req, res, next));
