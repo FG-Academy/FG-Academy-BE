@@ -1,3 +1,4 @@
+import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional } from 'class-validator';
 import {
   FileSystemStoredFile,
@@ -15,15 +16,19 @@ import {
 
 export class LectureDto {
   @IsOptional()
+  @Expose()
   lectureId?: number;
 
   @IsNotEmpty()
+  @Expose()
   title: string;
 
   @IsNotEmpty()
+  @Expose()
   videoLink: string;
 
   @IsNotEmpty()
+  @Expose()
   lectureNumber: number;
 }
 
@@ -63,20 +68,4 @@ export class UpdateCourseDto {
   @IsNotEmpty()
   @IsOptional()
   finishDate: Date;
-
-  // @IsNotEmpty()
-  // @IsOptional()
-  // lectures: LectureDto[];
-  // @Transform(({ value }) => {
-  //   console.log('value', value);
-  //   try {
-  //     return JSON.parse(value);
-  //   } catch {
-  //     throw new Error('Invalid JSON format for lectures');
-  //   }
-  // })
-  // @ValidateNested({ each: true })
-  // @Type(() => LectureDto)
-  @IsNotEmpty()
-  lectures: LectureDto[];
 }

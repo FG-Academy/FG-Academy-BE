@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { Lecture } from 'src/entities/lecture.entity';
 import { LectureDto, UpdateCourseDto } from './dto/update-course.dto';
 import { User } from 'src/entities/user.entity';
+import { UpdateLecturesDto } from './dto/update-lectures.dto';
 
 @Injectable()
 export class AdminService {
@@ -77,30 +78,15 @@ export class AdminService {
   }
 
   async updateCourse(courseId: number, updateCourseDto: UpdateCourseDto) {
-    console.log(updateCourseDto.lectures);
+    console.log(updateCourseDto);
     const course = await this.courseRepository.findOne({
       where: { courseId },
-      relations: ['lectures', 'lectures.quizzes'],
+      relations: ['lectures'],
     });
 
     if (!course) {
       throw new Error('Course not found');
     }
-
-    // if (updateCourseDto.title !== undefined)
-    //   course.title = updateCourseDto.title;
-    // if (updateCourseDto.level !== undefined)
-    //   course.level = updateCourseDto.level;
-    // if (updateCourseDto.description !== undefined)
-    //   course.description = updateCourseDto.description;
-    // if (updateCourseDto.curriculum !== undefined)
-    //   course.curriculum = updateCourseDto.curriculum;
-    // if (updateCourseDto.openDate !== undefined)
-    //   course.openDate = updateCourseDto.openDate;
-    // if (updateCourseDto.finishDate !== undefined)
-    //   course.finishDate = updateCourseDto.finishDate;
-    // if (updateCourseDto.thumbnailImage !== undefined)
-    //   course.thumbnailImagePath = updateCourseDto.thumbnailImage.path;
 
     course.title = updateCourseDto.title ?? course.title;
     course.level = updateCourseDto.level ?? course.level;
@@ -112,79 +98,45 @@ export class AdminService {
       course.thumbnailImagePath = updateCourseDto.thumbnailImage.path;
     }
 
-    if (updateCourseDto.lectures && course.lectures) {
-      const existingLectureIds = course.lectures.map(
-        (lecture) => lecture.lectureId,
-      );
-      updateCourseDto.lectures.forEach((dto) => {
-        const lectureDto = plainToInstance(LectureDto, dto);
-        console.log(lectureDto, typeof lectureDto);
-        if (
-          lectureDto.lectureId &&
-          existingLectureIds.includes(lectureDto.lectureId)
-        ) {
-          const lecture = course.lectures.find(
-            (l) => l.lectureId === lectureDto.lectureId,
-          );
-          lecture.title = lectureDto.title;
-          lecture.videoLink = lectureDto.videoLink;
-          lecture.lectureNumber = lectureDto.lectureNumber;
-          lecture.status = 'active';
-          console.log('lecture', lecture);
-        } else if (!lectureDto.lectureId) {
-          const newLecture = new Lecture();
-          newLecture.courseId = courseId;
-          newLecture.title = lectureDto.title;
-          newLecture.videoLink = lectureDto.videoLink;
-          newLecture.lectureNumber = lectureDto.lectureNumber;
-          newLecture.status = 'active';
-          console.log(newLecture);
-          course.lectures.push(newLecture);
-        }
-      });
-    }
+    await this.courseRepository.save(course); // Save the course with all changes
+  }
 
-    await this.courseRepository.manager.transaction(async (entityManager) => {
-      await entityManager.save(course.lectures); // Save all lectures (new and updated)
-      await entityManager.save(course); // Save the course with all changes
+  async updateLectures(courseId: number, updateLecturesDto: UpdateLecturesDto) {
+    const course = await this.courseRepository.findOne({
+      where: { courseId },
+      relations: ['lectures'],
     });
-
-    // if (updateCourseDto.lectures && course.lectures) {
-    //   // Iterate through each existing lecture in the course
-    //   course.lectures.forEach((lecture) => {
-    //     const lectureData = updateCourseDto.lectures.find(
-    //       (l) => l.lectureId === lecture.lectureId,
-    //     );
-    //     if (lectureData) {
-    //       lecture.title = lectureData.title;
-    //       lecture.videoLink = lectureData.videoLink;
-    //       lecture.lectureNumber = lectureData.lectureNumber;
-    //       lecture.status = 'active'; // Ensure they are marked active
-    //     } else if (lecture.status !== 'deleted') {
-    //       // Mark as deleted if not included in the updated DTO
-    //       lecture.status = 'deleted';
-    //     }
-    //   });
-
-    //   // Add new lectures not currently in the database
-    //   const newLectures = updateCourseDto.lectures
-    //     .filter((l) => !l.lectureId)
-    //     .map((lectureDto) => {
-    //       const newLecture = new Lecture();
-    //       newLecture.courseId = courseId;
-    //       newLecture.title = lectureDto.title;
-    //       newLecture.videoLink = lectureDto.videoLink;
-    //       newLecture.lectureNumber = lectureDto.lectureNumber;
-    //       newLecture.status = 'active';
-    //       return newLecture;
-    //       // course.lectures.push(newLecture);
-    //     });
-    //   // console.log(course);
-    //   course.lectures.push(...newLectures);
-    //   await this.lectureRepository.save(newLectures);
-    // }
-
-    // // Save all changes
-    // await this.courseRepository.save(course);
+    if (!course) {
+      throw new Error('Course not found');
+    }
+    const existingLectureIds = course.lectures.map(
+      (lecture) => lecture.lectureId,
+    );
+    for (const dto of updateLecturesDto.lectures) {
+      const lectureDto = plainToInstance(LectureDto, dto);
+      if (
+        lectureDto.lectureId &&
+        existingLectureIds.includes(lectureDto.lectureId)
+      ) {
+        const lecture = course.lectures.find(
+          (l) => l.lectureId === lectureDto.lectureId,
+        );
+        // lecture.courseId = courseId;
+        lecture.title = lectureDto.title;
+        lecture.videoLink = lectureDto.videoLink;
+        lecture.lectureNumber = lectureDto.lectureNumber;
+        lecture.status = 'active';
+        await this.lectureRepository.save(lecture);
+      } else {
+        const newLecture = new Lecture();
+        newLecture.courseId = courseId;
+        newLecture.title = lectureDto.title;
+        newLecture.videoLink = lectureDto.videoLink;
+        newLecture.lectureNumber = lectureDto.lectureNumber;
+        newLecture.status = 'active';
+        course.lectures.push(newLecture);
+        await this.lectureRepository.save(newLecture);
+      }
+    }
   }
 }
