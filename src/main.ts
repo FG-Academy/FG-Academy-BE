@@ -19,7 +19,10 @@ async function bootstrap() {
     }),
   );
   app.use((req, res, next) => new LoggerMiddleware().use(req, res, next));
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
   // app.useStaticAssets(join(__dirname, '..', 'public'));
   // app.useGlobalFilters(new GlobalExceptionFilter());
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
