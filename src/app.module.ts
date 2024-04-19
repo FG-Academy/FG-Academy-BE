@@ -23,6 +23,8 @@ import { join } from 'path';
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
+      serveStaticOptions: { index: false, redirect: false },
+      renderPath: '/asset',
     }),
     TypeOrmModule.forRootAsync(TypeOrmConfig),
     AuthModule,

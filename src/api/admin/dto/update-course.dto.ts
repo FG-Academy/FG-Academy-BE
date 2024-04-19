@@ -1,18 +1,5 @@
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional } from 'class-validator';
-import {
-  FileSystemStoredFile,
-  HasMimeType,
-  IsFile,
-  MaxFileSize,
-} from 'nestjs-form-data';
-
-// export interface LectureDto {
-//   lectureId?: number;
-//   title: string;
-//   videoLink: string;
-//   lectureNumber: number;
-// }
 
 export class LectureDto {
   @IsOptional()
@@ -33,17 +20,17 @@ export class LectureDto {
 }
 
 export class UpdateCourseDto {
-  @IsFile()
-  @IsOptional()
-  @MaxFileSize(1e8, {
-    message: '파일의 최대 사이즈는 100MB입니다',
-  })
-  @HasMimeType(['image/png', 'image/jpeg', 'image/jpg'], {
-    message: (e) => {
-      return `error: ${e.constraints}`;
-    },
-  })
-  thumbnailImage: FileSystemStoredFile;
+  // @IsFile()
+  // @IsOptional()
+  // @MaxFileSize(1e8, {
+  //   message: '파일의 최대 사이즈는 100MB입니다',
+  // })
+  // @HasMimeType(['image/png', 'image/jpeg', 'image/jpg'], {
+  //   message: (e) => {
+  //     return `error: ${e.constraints}`;
+  //   },
+  // })
+  // thumbnailImage: FileSystemStoredFile;
 
   @IsNotEmpty()
   @IsOptional()
