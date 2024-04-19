@@ -68,6 +68,11 @@ export class AdminService {
     const course = await this.courseRepository.findOne({
       where: { courseId },
       relations: ['enrollments', 'lectures'], // course 엔티티에서 enrollments와 lectures를 로드
+      order: {
+        lectures: {
+          lectureNumber: 'ASC', // Sort lectures by lectureNumber in ascending order
+        },
+      },
     });
 
     if (!course) {
@@ -77,7 +82,11 @@ export class AdminService {
     return course;
   }
 
-  async updateCourse(courseId: number, updateCourseDto: UpdateCourseDto) {
+  async updateCourse(
+    courseId: number,
+    updateCourseDto: UpdateCourseDto,
+    filepath: string,
+  ) {
     console.log(updateCourseDto);
     const course = await this.courseRepository.findOne({
       where: { courseId },
@@ -94,8 +103,8 @@ export class AdminService {
     course.curriculum = updateCourseDto.curriculum ?? course.curriculum;
     course.openDate = updateCourseDto.openDate ?? course.openDate;
     course.finishDate = updateCourseDto.finishDate ?? course.finishDate;
-    if (updateCourseDto.thumbnailImage) {
-      course.thumbnailImagePath = updateCourseDto.thumbnailImage.path;
+    if (filepath) {
+      course.thumbnailImagePath = filepath;
     }
 
     await this.courseRepository.save(course); // Save the course with all changes
@@ -138,5 +147,15 @@ export class AdminService {
         await this.lectureRepository.save(newLecture);
       }
     }
+  }
+
+  async findAllCurriculums() {
+    const uniqueCurriculums = await this.courseRepository
+      .createQueryBuilder('course')
+      .select('DISTINCT(course.curriculum)', 'curriculum') // 'curriculum'은 SELECT에서 반환될 레이블입니다.
+      .getRawMany();
+
+    // 'curriculum' 레이블로 추출된 결과만 배열로 반환합니다.
+    return uniqueCurriculums.map((entry) => entry.curriculum);
   }
 }

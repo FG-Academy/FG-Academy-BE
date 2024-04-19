@@ -1,8 +1,18 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import { FormDataRequest } from 'nestjs-form-data';
 import { UpdateLecturesDto } from './dto/update-lectures.dto';
+import { FileUploadInterceptor } from './interceptor/fileUploadInterceptor';
+import { Request } from 'express';
 
 @Controller('admin')
 export class AdminController {
@@ -30,13 +40,18 @@ export class AdminController {
   }
 
   @Patch('/courses/:courseId')
-  @FormDataRequest()
+  // @FormDataRequest()
+  // @UseInterceptors(FileInterceptor('thumbnailImage'))
+  @UseInterceptors(FileUploadInterceptor)
   async create(
     @Param('courseId') courseId: number,
     @Body() updateCourseDto: UpdateCourseDto,
+    @Req() req: Request,
   ) {
     console.log(updateCourseDto);
-    await this.adminService.updateCourse(courseId, updateCourseDto);
+    const filepath = req['filepath']; // 파일 경로 접근
+    console.log(filepath);
+    await this.adminService.updateCourse(courseId, updateCourseDto, filepath);
     return { message: 'Course updated successfully' };
   }
 
@@ -48,5 +63,11 @@ export class AdminController {
     console.log(updateLecturesDto);
     await this.adminService.updateLectures(courseId, updateLecturesDto);
     return { message: 'Course updated successfully' };
+  }
+
+  @Get('/curriculum')
+  async findAllCurriculums() {
+    const result = await this.adminService.findAllCurriculums();
+    return { data: result };
   }
 }
