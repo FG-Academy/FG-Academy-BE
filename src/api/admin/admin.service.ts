@@ -1,15 +1,18 @@
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 import {
   Injectable,
+  NotFoundException,
   // NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from 'src/entities/course.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Lecture } from 'src/entities/lecture.entity';
 import { LectureDto, UpdateCourseDto } from './dto/update-course.dto';
 import { User } from 'src/entities/user.entity';
 import { UpdateLecturesDto } from './dto/update-lectures.dto';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { DeleteCourseDto } from './dto/delete-course.dto';
 
 @Injectable()
 export class AdminService {
@@ -53,6 +56,7 @@ export class AdminService {
     // 모든 코스를 가져옵니다.
     const courses = await this.courseRepository.find({
       relations: ['enrollments'],
+      where: { status: In(['active', 'inactive']) },
     });
 
     // 각 코스별로 수강 인원 수를 계산합니다.
@@ -64,10 +68,38 @@ export class AdminService {
     return courses;
   }
 
+  async createCourse(createCourseDto: CreateCourseDto, filepath: string) {
+    const newCourseData = this.courseRepository.create({
+      thumbnailImagePath: filepath,
+      ...createCourseDto,
+    });
+    console.log(newCourseData);
+
+    await this.courseRepository.save(newCourseData);
+
+    return { message: 'Success' };
+  }
+
+  async deleteCourses(deleteCourseDto: DeleteCourseDto) {
+    const courseIds = deleteCourseDto.courseIds;
+    try {
+      const deleteCourses = await this.courseRepository.find({
+        where: { courseId: In(courseIds) },
+      });
+      deleteCourses.forEach((course) => {
+        course.status = 'deleted';
+      });
+      // 변경된 상태를 저장
+      await this.courseRepository.save(deleteCourses);
+    } catch {
+      throw new NotFoundException('존재하지 않는 코스입니다.');
+    }
+  }
+
   async findOne(courseId: number) {
     const course = await this.courseRepository.findOne({
       where: { courseId },
-      relations: ['enrollments', 'lectures'], // course 엔티티에서 enrollments와 lectures를 로드
+      relations: ['enrollments', 'lectures'],
       order: {
         lectures: {
           lectureNumber: 'ASC', // Sort lectures by lectureNumber in ascending order
@@ -78,6 +110,11 @@ export class AdminService {
     if (!course) {
       throw new Error('Course not found');
     }
+
+    // Filter active lectures manually after fetching
+    course.lectures = course.lectures.filter(
+      (lecture) => lecture.status === 'active',
+    );
 
     return course;
   }
@@ -98,6 +135,7 @@ export class AdminService {
     }
 
     course.title = updateCourseDto.title ?? course.title;
+    course.status = updateCourseDto.status ?? course.status;
     course.level = updateCourseDto.level ?? course.level;
     course.description = updateCourseDto.description ?? course.description;
     course.curriculum = updateCourseDto.curriculum ?? course.curriculum;
@@ -120,6 +158,9 @@ export class AdminService {
     }
     const existingLectureIds = course.lectures.map(
       (lecture) => lecture.lectureId,
+    );
+    const dtoLectureIds = updateLecturesDto.lectures.map(
+      (dto) => dto.lectureId,
     );
     for (const dto of updateLecturesDto.lectures) {
       const lectureDto = plainToInstance(LectureDto, dto);
@@ -145,6 +186,17 @@ export class AdminService {
         newLecture.status = 'active';
         course.lectures.push(newLecture);
         await this.lectureRepository.save(newLecture);
+      }
+    }
+    for (const existingId of existingLectureIds) {
+      if (!dtoLectureIds.includes(existingId)) {
+        const lectureToMarkDeleted = course.lectures.find(
+          (l) => l.lectureId === existingId,
+        );
+        if (lectureToMarkDeleted) {
+          lectureToMarkDeleted.status = 'deleted';
+          await this.lectureRepository.save(lectureToMarkDeleted);
+        }
       }
     }
   }

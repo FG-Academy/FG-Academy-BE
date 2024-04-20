@@ -43,6 +43,7 @@ export class FileUploadInterceptor implements NestInterceptor<void, void> {
           // const myId = req.headers['x-my-id'];
           const extArray = file.mimetype.split('/');
           const filename = `profile-${uuid}.${extArray[extArray.length - 1]}`;
+          console.log(filename);
           req.filepath = `/asset/${filename}`; // 파일 경로를 요청 객체에 추가
           cb(null, filename);
         },

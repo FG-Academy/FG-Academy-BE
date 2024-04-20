@@ -38,6 +38,10 @@ export class UpdateCourseDto {
 
   @IsNotEmpty()
   @IsOptional()
+  status: string;
+
+  @IsNotEmpty()
+  @IsOptional()
   level: string;
 
   @IsNotEmpty()
