@@ -46,7 +46,7 @@ export class AuthService {
     };
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '1m',
+      expiresIn: '30d',
     });
 
     await this.refreshTokenIdsStorage.insert(user.userId, refreshToken);
@@ -56,8 +56,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       level: user.level,
-      expiresIn: 10,
-      // expiresIn: 10,
+      expiresIn: 10 * 60 * 60,
       accessToken,
       refreshToken,
     };
