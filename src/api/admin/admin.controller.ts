@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -13,6 +14,8 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { UpdateLecturesDto } from './dto/update-lectures.dto';
 import { FileUploadInterceptor } from './interceptor/fileUploadInterceptor';
 import { Request } from 'express';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { DeleteCourseDto } from './dto/delete-course.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -34,14 +37,27 @@ export class AdminController {
     return this.adminService.findAll();
   }
 
+  @Post('/courses')
+  @UseInterceptors(FileUploadInterceptor)
+  createCourse(@Body() createCourseDto: CreateCourseDto, @Req() req: Request) {
+    console.log(createCourseDto);
+    const filepath = req['filepath']; // 파일 경로 접근
+    return this.adminService.createCourse(createCourseDto, filepath);
+  }
+
+  @Delete('/courses')
+  async deleteCourses(@Body() deleteCourseDto: DeleteCourseDto) {
+    await this.adminService.deleteCourses(deleteCourseDto);
+
+    return { message: 'Courses deleted successfully' };
+  }
+
   @Get('/courses/:courseId')
   findOne(@Param('courseId') courseId: number) {
     return this.adminService.findOne(courseId);
   }
 
   @Patch('/courses/:courseId')
-  // @FormDataRequest()
-  // @UseInterceptors(FileInterceptor('thumbnailImage'))
   @UseInterceptors(FileUploadInterceptor)
   async create(
     @Param('courseId') courseId: number,
