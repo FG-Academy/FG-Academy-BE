@@ -23,29 +23,32 @@ export class User {
   @Column({ length: 50 })
   name: string;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, nullable: true })
   email: string;
 
-  @Column({ length: 200 })
+  @Column({ length: 200, nullable: true })
   @Exclude()
   password: string;
 
-  @Column({ length: 20 })
+  @Column({ length: 20, nullable: true })
   phoneNumber: string;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: true })
   churchName: string;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: true })
   departmentName: string;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, nullable: true })
+  tempDepartment: string;
+
+  @Column({ length: 50, nullable: true })
   position: string;
 
-  @Column()
+  @Column({ nullable: true })
   yearsOfService: number;
 
-  @Column({ length: 10, default: 'L0' })
+  @Column({ length: 10, default: 'L0', nullable: true })
   level: string;
 
   @Column({ length: 50, nullable: true })
@@ -81,7 +84,7 @@ export class User {
   enrollments: Enrollment[];
 
   @BeforeInsert()
-  @BeforeUpdate()
+  // @BeforeUpdate()
   async hashPassword(): Promise<void> {
     const salt = await bcrypt.genSalt();
     if (!/^\$2[abxy]?\$\d+\$/.test(this.password)) {
@@ -91,8 +94,9 @@ export class User {
 
   @BeforeInsert()
   @BeforeUpdate()
-  setNameBirthId(): void {
+  async setNameBirthId() {
     const birthDate = new Date(this.birthDate);
+    console.log(birthDate);
     const month = birthDate.getMonth() + 1; // JS에서 월은 0부터 시작하므로 1을 더해줍니다.
     const day = birthDate.getDate();
     const formattedMonth = month.toString().padStart(2, '0');
