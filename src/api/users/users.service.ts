@@ -166,13 +166,12 @@ export class UsersService {
 
   async updateDB(data: UpdateUserDto, userId: number) {
     console.log(data);
+    const user = await this.usersRepository.findOne({
+      where: {
+        userId,
+      },
+    });
     if (data.email) {
-      const user = await this.usersRepository.findOne({
-        where: {
-          userId,
-        },
-      });
-
       const isEmailExist = await this.usersRepository.findOne({
         where: {
           email: data.email,
@@ -188,9 +187,13 @@ export class UsersService {
     }
 
     try {
-      await this.usersRepository.update({ userId: userId }, { ...data });
+      const toSaveUser = this.usersRepository.create({
+        ...user,
+        ...data,
+      });
+      await this.usersRepository.update({ userId }, toSaveUser);
     } catch (err) {
-      throw new Error();
+      throw new Error(err);
     }
 
     return { message: 'Successfully update user info.' };
