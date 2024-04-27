@@ -81,11 +81,6 @@ export class DashboardService {
       .leftJoinAndSelect('lecture.course', 'course') // 강의가 속한 코스를 추가로 불러옵니다.
       .where('quizSubmit.userId = :userId', { userId })
       .getMany();
-    //   .createQueryBuilder('quizSubmit')
-    //   .leftJoinAndSelect('quizSubmit.quiz', 'quiz')
-    //   .leftJoinAndSelect('quiz.quizAnswers', 'quizAnswer')
-    //   .where('quizSubmit.userId = :userId', { userId })
-    //   .getMany();
 
     // quizId를 기준으로 제출된 퀴즈들을 그룹화합니다.
     const quizMap = new Map();
@@ -128,6 +123,11 @@ export class DashboardService {
         )
       ) {
         quizEntry.isAnswer = false;
+      }
+      if (submit.quiz.quizType !== 'multiple') {
+        if (submit.status === 0) quizEntry.isAnswer = null;
+        else if (submit.status === 1) quizEntry.isAnswer = true;
+        else if (submit.status === 2) quizEntry.isAnswer = false;
       }
     });
 

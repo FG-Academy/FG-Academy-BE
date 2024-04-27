@@ -104,28 +104,7 @@ export class UsersService {
     return user;
   }
 
-  async findOneByUserId(where: FindOneOptions<User>) {
-    const user = await this.usersRepository.findOne(where);
-
-    if (!user) {
-      throw new NotFoundException(
-        `There isn't any user with identifier: ${where}`,
-      );
-    }
-
-    return instanceToPlain(user);
-  }
-
   async saveMinutes(minutes: number, userId: number, lectureId: number) {
-    // const result = await this.lectureTimeRecordRepository.update(
-    //   {
-    //     lectureId,
-    //     userId,
-    //   },
-    //   {
-    //     playTime: minutes,
-    //   },
-    // );
     const newRecord = await this.lectureTimeRecordRepository.create({
       lectureId,
       userId,

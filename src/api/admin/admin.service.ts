@@ -6,27 +6,48 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from 'src/entities/course.entity';
-import { In, Repository } from 'typeorm';
 import { Lecture } from 'src/entities/lecture.entity';
 import { LectureDto, UpdateCourseDto } from './dto/update-course.dto';
+import { Announcement } from 'src/entities/announcement.entity';
+import { Enrollment } from 'src/entities/enrollment.entity';
+import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
+import { Quiz } from 'src/entities/quiz.entity';
+import { QuizAnswer } from 'src/entities/quizAnswer.entity';
+import { QuizSubmit } from 'src/entities/quizSubmit.entity';
 import { User } from 'src/entities/user.entity';
 import { UpdateLecturesDto } from './dto/update-lectures.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { DeleteCourseDto } from './dto/delete-course.dto';
+import { DataSource, FindOneOptions, Repository, In } from 'typeorm';
+import { FeedbackDescriptiveQuiz } from './dto/feedbackDescriptiveQuiz.dto';
+import { CreateQuizDto } from './dto/create-new-quiz.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private usersRepository: Repository<User>, // UserRepository 주입
+    @InjectRepository(LectureTimeRecord)
+    private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
+    private dataSource: DataSource,
+    @InjectRepository(Quiz)
+    private quizRepository: Repository<Quiz>,
+    @InjectRepository(QuizAnswer)
+    private quizAnswerRepository: Repository<QuizAnswer>,
+    @InjectRepository(QuizSubmit)
+    private quizSubmitRepository: Repository<QuizSubmit>,
+    @InjectRepository(Course)
+    private courseRepository: Repository<Course>,
     @InjectRepository(Lecture)
-    private readonly lectureRepository: Repository<Lecture>,
+    private lectureRepository: Repository<Lecture>,
+    @InjectRepository(Announcement)
+    private announcementRepository: Repository<Announcement>,
+    @InjectRepository(Enrollment)
+    private enrollmentRepository: Repository<Enrollment>,
   ) {}
 
   async findAllUsers() {
-    const user = await this.userRepository.find({
+    const user = await this.usersRepository.find({
       relations: ['enrollments'],
     });
 
@@ -34,7 +55,7 @@ export class AdminService {
   }
 
   async findUserById(userId: number) {
-    const user = await this.userRepository.findOne({
+    const user = await this.usersRepository.findOne({
       where: {
         userId,
       },
@@ -118,6 +139,257 @@ export class AdminService {
 
     return course;
   }
+
+  async findOneByUserId(where: FindOneOptions<User>) {
+    const user = await this.usersRepository.findOne(where);
+
+    if (!user) {
+      throw new NotFoundException(
+        `There isn't any user with identifier: ${where}`,
+      );
+    }
+
+    return instanceToPlain(user);
+  }
+
+  async findQuizAll() {
+    // 모든 퀴즈 제출 정보와 연관된 데이터를 함께 조회합니다.
+    const quizSubmissions = await this.quizSubmitRepository.find({
+      relations: [
+        'user',
+        'quiz',
+        'quiz.lecture',
+        'quiz.lecture.course',
+        'quiz.quizAnswers',
+      ],
+      order: {
+        userId: 'ASC', // 정렬을 확실하게 하기 위해 추가
+      },
+    });
+
+    const groupedResults = {};
+
+    // 퀴즈 제출을 사용자별로 그룹화
+    quizSubmissions.forEach((submission) => {
+      const userId = submission.user.userId;
+      const quizId = submission.quiz.quizId;
+
+      // console.log(submission);
+
+      // 해당 사용자와 퀴즈 ID를 기준으로 그룹이 아직 없으면 초기화
+      const userQuizKey = `${userId}-${quizId}`;
+      if (!groupedResults[userQuizKey]) {
+        groupedResults[userQuizKey] = {
+          userId: userId,
+          name: submission.user.name,
+          department: submission.user.departmentName,
+          position: submission.user.position,
+          level: submission.user.level,
+          quizId: quizId, // 추가된 quizId
+          courseTitle: submission.quiz.lecture.course.title,
+          lectureTitle: submission.quiz.lecture.title,
+          quizTitle: submission.quiz.question,
+          quizType: submission.quiz.quizType,
+          submittedAnswers: [],
+          answerNumbers: submission.quiz.quizAnswers
+            .filter((a) => a.isAnswer)
+            .map((a) => a.itemIndex),
+          answerContents: submission.quiz.quizAnswers
+            .filter((a) => a.isAnswer)
+            .map((a) => a.item),
+          quizContents: [],
+          corrected: true,
+          feedback: submission.feedbackComment,
+          submittedDate: submission.createdAt,
+          status: submission.status,
+        };
+      }
+
+      // 문항 내용과 제출한 답안 추가
+      if (submission.quiz.quizType === 'multiple') {
+        groupedResults[userQuizKey].submittedAnswers.push(
+          submission.multipleAnswer,
+        );
+        const answerDetail = submission.quiz.quizAnswers.find(
+          (a) => a.itemIndex === submission.multipleAnswer,
+        );
+        if (answerDetail) {
+          groupedResults[userQuizKey].quizContents.push(answerDetail.item);
+        }
+      } else {
+        groupedResults[userQuizKey].submittedAnswer =
+          submission.submittedAnswer;
+      }
+    });
+
+    // 정답 체크 로직을 사용자의 각 제출마다 적용
+    Object.keys(groupedResults).forEach((key) => {
+      const quiz = groupedResults[key];
+
+      console.log(quiz.status);
+      if (quiz.quizType === 'multiple') {
+        quiz.corrected =
+          quiz.submittedAnswers.sort((a, b) => a - b).join(',') ===
+          quiz.answerNumbers.sort((a, b) => a - b).join(',');
+      } else if (quiz.quizType !== 'multiple') {
+        if (quiz.status === 0) quiz.corrected = null;
+        else if (quiz.status === 1) quiz.corrected = true;
+        else if (quiz.status === 2) quiz.corrected = false;
+      }
+    });
+
+    // 데이터 구조를 최종 사용자별로 재구성
+    const finalResults = {};
+    Object.values(groupedResults).forEach((quiz: any) => {
+      if (!finalResults[quiz.userId]) {
+        finalResults[quiz.userId] = {
+          userId: quiz.userId,
+          name: quiz.name,
+          department: quiz.department,
+          position: quiz.position,
+          level: quiz.level,
+          quizzes: [],
+          totalSubmissions: 0,
+          correctSubmissions: 0,
+        };
+      }
+
+      finalResults[quiz.userId].quizzes.push({
+        quizId: quiz.quizId,
+        courseTitle: quiz.courseTitle,
+        lectureTitle: quiz.lectureTitle,
+        quizTitle: quiz.quizTitle,
+        quizContents: quiz.quizContents,
+        quizType: quiz.quizType,
+        submittedAnswer: quiz.submittedAnswer,
+        answer: quiz.answerNumbers,
+        answerContent: quiz.answerContents.join(', '),
+        corrected: quiz.corrected,
+        feedback: quiz.feedback,
+        submittedDate: quiz.submittedDate,
+      });
+      if (quiz.quizType === 'multiple')
+        finalResults[quiz.userId].totalSubmissions++;
+      if (quiz.corrected) {
+        finalResults[quiz.userId].correctSubmissions++;
+      }
+    });
+
+    // 각 사용자별로 정답률 계산
+    return Object.values(finalResults).map((userResult: any) => {
+      userResult.correctedRate = (
+        (userResult.correctSubmissions / userResult.totalSubmissions) *
+        100
+      ).toFixed(2);
+      return userResult;
+    });
+  }
+
+  // async findQuizAll() {
+  //   const quizSubmissions = await this.quizSubmitRepository.find({
+  //     relations: [
+  //       'user',
+  //       'quiz',
+  //       'quiz.lecture',
+  //       'quiz.lecture.course',
+  //       'quiz.quizAnswers',
+  //     ],
+  //   });
+
+  //   const groupedResults = {};
+
+  //   for (const submission of quizSubmissions) {
+  //     const key = `${submission.user.userId}-${submission.quiz.quizId}`;
+
+  //     if (!groupedResults[key]) {
+  //       groupedResults[key] = {
+  //         userId: submission.user.userId,
+  //         name: submission.user.name,
+  //         department: submission.user.departmentName,
+  //         position: submission.user.position,
+  //         level: submission.user.level,
+  //         courseTitle: submission.quiz.lecture.course.title,
+  //         lectureTitle: submission.quiz.lecture.title,
+  //         quizId: submission.quiz.quizId,
+  //         quizTitle: submission.quiz.question,
+  //         quizContents: [],
+  //         quizContentNumber: [],
+  //         submittedAnswer: null,
+  //         quizType: submission.quiz.quizType,
+  //         answer: submission.quiz.quizAnswers
+  //           .filter((a) => a.isAnswer)
+  //           .map((a) => a.item),
+  //         answerNumber: submission.quiz.quizAnswers
+  //           .filter((a) => a.isAnswer)
+  //           .map((a) => a.itemIndex),
+  //         corrected: false,
+  //         feedback: submission.feedbackComment,
+  //         submittedDate: submission.updatedAt,
+  //       };
+  //     }
+
+  //     if (submission.quiz.quizType === 'multiple') {
+  //       const submittedIndex = submission.multipleAnswer;
+  //       const quizAnswer = submission.quiz.quizAnswers.find(
+  //         (a) => a.itemIndex === submittedIndex,
+  //       );
+  //       if (quizAnswer) {
+  //         groupedResults[key].quizContents.push(quizAnswer.item);
+  //         groupedResults[key].quizContentNumber.push(submittedIndex);
+  //       }
+  //     } else {
+  //       groupedResults[key].submittedAnswer = submission.submittedAnswer;
+  //     }
+  //   }
+
+  //   // 채점 로직: 모든 문항을 제출해야 하며, 잘못된 선택이 없어야 정답 처리
+  //   Object.keys(groupedResults).forEach((key) => {
+  //     const result = groupedResults[key];
+  //     if (result.quizType === 'multiple') {
+  //       const correctAnswers = result.answerNumber.sort();
+  //       const submittedAnswers = result.quizContentNumber.sort();
+
+  //       // 제출한 답안과 정답 배열이 완전히 일치하는지 확인
+  //       result.corrected =
+  //         JSON.stringify(correctAnswers) === JSON.stringify(submittedAnswers);
+  //     }
+  //   });
+
+  //   return Object.values(groupedResults);
+  // }
+
+  // async findPage(page: number) {
+  //   const take = 10; // 한 페이지 당 아이템 수
+  //   const skip = (page - 1) * take; // 건너뛸 아이템 수 계산
+
+  //   const users = await this.usersRepository.find({
+  //     take: take,
+  //     skip: skip,
+  //   });
+
+  //   const { count } = await this.findAll();
+  //   return {
+  //     users: instanceToPlain(users),
+  //     count,
+  //   };
+  // }
+
+  // async findByName(name: string) {
+  //   const users = await this.usersRepository.find({
+  //     where: {
+  //       name,
+  //     },
+  //   });
+  //   if (!users) {
+  //     throw new NotFoundException('User not found');
+  //   }
+
+  //   const { count } = await this.findAll();
+  //   return {
+  //     users: instanceToPlain(users),
+  //     count,
+  //   };
+  // }
 
   async updateCourse(
     courseId: number,
@@ -209,5 +481,163 @@ export class AdminService {
 
     // 'curriculum' 레이블로 추출된 결과만 배열로 반환합니다.
     return uniqueCurriculums.map((entry) => entry.curriculum);
+  }
+
+  async findMultipleQuizList(userId: number, queryQuizType: string) {
+    // 사용자가 제출한 모든 퀴즈 정보와 그 답안들을 조회합니다.
+    const submittedQuizzes = await this.quizSubmitRepository
+      .createQueryBuilder('quizSubmit')
+      .leftJoinAndSelect('quizSubmit.quiz', 'quiz')
+      .leftJoinAndSelect('quiz.quizAnswers', 'quizAnswer')
+      .leftJoinAndSelect('quiz.lecture', 'lecture')
+      .leftJoinAndSelect('lecture.course', 'course') // 강의가 속한 코스를 추가로 불러옵니다.
+      .where('quizSubmit.userId = :userId', { userId })
+      .andWhere(`quiz.quizType = '${queryQuizType}'`)
+      .getMany();
+
+    // quizId를 기준으로 제출된 퀴즈들을 그룹화합니다.
+    const quizMap = new Map();
+
+    submittedQuizzes.forEach((submit) => {
+      const quizId = submit.quiz.quizId;
+      if (!quizMap.has(quizId)) {
+        const correctAnswers = submit.quiz.quizAnswers
+          .filter((answer) => answer.isAnswer)
+          .map((answer) => ({
+            itemIndex: answer.itemIndex,
+            item: answer.item,
+          }));
+
+        quizMap.set(quizId, {
+          quizId: quizId,
+          question: submit.quiz.question,
+          submittedAnswer: [],
+          submittedAnswersContents: [],
+          isAnswer: true, // 초기에는 true로 설정하고, 나중에 검증
+          lectureTitle: submit.quiz.lecture.title, // 강의 제목
+          courseTitle: submit.quiz.lecture.course.title, // 코스 제목
+          correctAnswers: correctAnswers,
+          feedback: submit.feedbackComment,
+        });
+      }
+      const quizEntry = quizMap.get(quizId);
+
+      if (queryQuizType === 'descriptive') {
+        quizEntry.submittedAnswer.push(submit.submittedAnswer);
+      } else {
+        quizEntry.submittedAnswer.push(submit.multipleAnswer);
+      }
+
+      quizEntry.submittedAnswersContents.push(
+        submit.quiz.quizAnswers.find(
+          (answer) => answer.itemIndex === submit.multipleAnswer,
+        )?.item || '답안 없음',
+      );
+      // 모든 제출된 답안이 정답인지 확인하여 하나라도 틀리면 isAnswer를 false로 설정합니다.
+      if (
+        !submit.quiz.quizAnswers.some(
+          (answer) =>
+            answer.isAnswer && answer.itemIndex === submit.multipleAnswer,
+        )
+      ) {
+        quizEntry.isAnswer = false;
+      }
+
+      // 주관식일 경우 미채점=null, 정답체크=true, 오답체크=false
+      if (submit.quiz.quizType !== 'multiple') {
+        if (submit.status === 0) quizEntry.isAnswer = null;
+        else if (submit.status === 1) quizEntry.isAnswer = true;
+        else if (submit.status === 2) quizEntry.isAnswer = false;
+      }
+    });
+
+    // Map의 값들을 배열로 변환하여 반환합니다.
+    return Array.from(quizMap.values()).map((quiz) => ({
+      ...quiz,
+      submittedAnswersContents: [...new Set(quiz.submittedAnswersContents)], // 중복 제거
+    }));
+  }
+
+  async feedbackQuiz(
+    userId: number,
+    quizId: number,
+    feedbackdto: FeedbackDescriptiveQuiz,
+  ) {
+    try {
+      const quizSubmitData = await this.quizSubmitRepository.findOne({
+        where: { user: { userId }, quiz: { quizId } },
+      });
+      if (!quizSubmitData) {
+        throw new NotFoundException(
+          '사용자 퀴즈 제출 데이터를 찾을 수 없습니다.',
+        );
+      }
+
+      const { feedbackComment, corrected } = feedbackdto;
+
+      // 피드백과 채점 상태를 업데이트
+      quizSubmitData.feedbackComment = feedbackComment;
+      if (corrected) {
+        quizSubmitData.status = 1;
+      } else {
+        quizSubmitData.status = 2;
+      }
+
+      await this.quizSubmitRepository.save(quizSubmitData);
+
+      return { message: '피드백 전송에 성공했습니다.' };
+    } catch (err) {
+      throw new err();
+    }
+  }
+
+  async createNewQuiz(lectureId: number, createNewQuiz: CreateQuizDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+
+    // 트랜잭션 시작
+    await queryRunner.startTransaction();
+
+    try {
+      const findLastIndex = await this.quizRepository.findOne({
+        where: { lecture: { lectureId } },
+        order: { quizIndex: 'DESC' },
+      });
+
+      const { quizType, question } = createNewQuiz;
+
+      const quizData = await this.quizRepository.create({
+        lecture: { lectureId },
+        quizType: quizType,
+        quizIndex: findLastIndex === null ? 1 : findLastIndex.quizIndex + 1,
+        question: question,
+      });
+
+      const quizSaveResult = await this.quizRepository.save(quizData);
+
+      if (quizType === 'multiple') {
+        const answers = createNewQuiz.quizInfo.map((info) => {
+          const quizAnswer = this.quizAnswerRepository.create({
+            quizId: quizSaveResult.quizId,
+            itemIndex: info.itemIndex,
+            item: info.item,
+            isAnswer: info.isAnswer,
+          });
+          return quizAnswer;
+        });
+
+        // 답변 엔티티들을 저장
+        await this.quizAnswerRepository.save(answers);
+      }
+
+      await queryRunner.commitTransaction();
+
+      return { message: '성공했습니다!' };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw new err();
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

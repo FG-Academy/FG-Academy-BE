@@ -18,13 +18,13 @@ export class QuizAnswer {
   @Column({ comment: '퀴즈id' })
   quizId: number;
 
-  @Column({ length: 20, comment: '항목' })
+  @Column({ length: 20, comment: '퀴즈 문항 내용' })
   item: string;
 
-  @Column({ comment: '정답 여부' })
+  @Column({ comment: '해당 문항이 정답인지에 대한 여부' })
   isAnswer: boolean;
 
-  @Column({ length: 10, nullable: true })
+  @Column({ length: 10, nullable: true, default: 'active' })
   status: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
