@@ -36,10 +36,15 @@ export class UsersController {
     return await this.usersService.findAll();
   }
 
+  @Public()
+  @Get('/userByFile')
+  async createUsersByFile() {
+    await this.usersService.createUsersByFile();
+  }
+
   @HttpCode(200)
   @Get('/profile')
   async getProfile(@AuthUser() user) {
-    // console.log(user);
     // 주요 정보 제외하고 resultData에 회원정보를 담아서 전송
     const { password, refreshToken, ...resultData } = user;
 
@@ -51,8 +56,6 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @AuthUser('userId') userId: number,
   ) {
-    console.log(dto);
-    console.log(userId);
     const result = await this.usersService.updateDB(dto, userId);
     return result;
   }

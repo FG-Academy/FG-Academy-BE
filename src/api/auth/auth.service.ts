@@ -23,7 +23,6 @@ export class AuthService {
   ) {}
 
   async create(signUpDto: SignUpDto): Promise<User> {
-    // console.log(signUpDto);
     const user = await this.usersService.create(signUpDto);
     delete user.password;
 
@@ -35,6 +34,7 @@ export class AuthService {
       signInDto.nameBirthId,
       signInDto.password,
     );
+    console.log(user);
     if (!user) {
       throw new UnauthorizedException('Invalid username or password');
     }
@@ -67,6 +67,7 @@ export class AuthService {
     password: string,
   ): Promise<Partial<User> | null> {
     const user = await this.usersService.findByNameBirthId(nameBirthId);
+    console.log(user);
     if (user && (await user.checkPassword(password))) {
       const { password, ...result } = user;
       return result;
@@ -91,7 +92,7 @@ export class AuthService {
       email: user.email,
     };
     const accessToken = await this.jwtService.signAsync(payload);
-    return { accessToken, expiresIn: 24 * 60 * 60 };
+    return { accessToken, expiresIn: 10 * 60 * 60 };
   }
 
   async invalidateToken(refreshToken: string): Promise<void> {
@@ -133,7 +134,6 @@ export class AuthService {
     const res = await firstValueFrom(
       this.httpService.post(tokenUrl, '', { headers: tokenHeaders }),
     );
-    console.log(res.data);
 
     // url을 다음과 같이 바꾸면 아래의 요청방식 3가지 중 하나로 요청할 수 있다.
     // const tokenUrl = `https://kauth.kakao.com/oauth/token?`

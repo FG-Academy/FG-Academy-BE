@@ -23,7 +23,6 @@ export class TokenInterceptor implements NestInterceptor {
         const response = context.switchToHttp().getResponse<Response>();
 
         if (data.refreshToken) {
-          console.log('refresh 설정');
           response.cookie('refreshToken', data.refreshToken, {
             httpOnly: true,
             sameSite: 'lax',

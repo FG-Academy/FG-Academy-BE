@@ -45,7 +45,6 @@ export class AdminController {
   @Post('/courses')
   @UseInterceptors(FileUploadInterceptor)
   createCourse(@Body() createCourseDto: CreateCourseDto, @Req() req: Request) {
-    console.log(createCourseDto);
     const filepath = req['filepath']; // 파일 경로 접근
     return this.adminService.createCourse(createCourseDto, filepath);
   }
@@ -69,9 +68,7 @@ export class AdminController {
     @Body() updateCourseDto: UpdateCourseDto,
     @Req() req: Request,
   ) {
-    console.log(updateCourseDto);
     const filepath = req['filepath']; // 파일 경로 접근
-    console.log(filepath);
     await this.adminService.updateCourse(courseId, updateCourseDto, filepath);
     return { message: 'Course updated successfully' };
   }
@@ -81,7 +78,6 @@ export class AdminController {
     @Param('courseId') courseId: number,
     @Body() updateLecturesDto: UpdateLecturesDto,
   ) {
-    console.log(updateLecturesDto);
     await this.adminService.updateLectures(courseId, updateLecturesDto);
     return { message: 'Course updated successfully' };
   }

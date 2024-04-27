@@ -14,11 +14,6 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   }
 
   async validate(accessToken: string, refreshToken: string, profile: Profile) {
-    // 토큰과 프로파일을 한번 확인해보자
-    console.log('accessToken: ', accessToken);
-    console.log('refreshToken: ', refreshToken);
-    console.log(profile);
-
     return {
       // email: profile._json.kakao_account.email,
       password: String(profile.id),

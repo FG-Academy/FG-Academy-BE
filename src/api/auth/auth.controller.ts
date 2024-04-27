@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signUp.dto';
-import { LocalAuthGuard } from './guards/localAuth.guard';
+// import { LocalAuthGuard } from './guards/localAuth.guard';
 import { Public } from './decorators/public.decorator';
 import { SignInDto } from './dto/signIn.dto';
 import { TokenInterceptor } from './interceptors/token.interceptor';
@@ -34,11 +34,12 @@ export class AuthController {
     return this.authService.create(signUpDto);
   }
 
+  // @UseGuards(LocalAuthGuard)
   @Public()
-  @UseGuards(LocalAuthGuard)
   @UseInterceptors(TokenInterceptor)
   @Post('sign-in')
   async signIn(@Body() signInDto: SignInDto) {
+    console.log(signInDto);
     return await this.authService.signIn(signInDto);
   }
 
@@ -48,8 +49,6 @@ export class AuthController {
   @Get('refresh-token')
   async refreshToken(@Req() request: Request) {
     const refreshToken = request.cookies['refreshToken'];
-    console.log('user', request.user);
-    console.log('refresh', refreshToken);
     return await this.authService.refreshAccessToken(
       refreshToken,
       request.user as User,

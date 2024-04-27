@@ -40,9 +40,6 @@ export class User {
   departmentName: string;
 
   @Column({ length: 50, nullable: true })
-  tempDepartment: string;
-
-  @Column({ length: 50, nullable: true })
   position: string;
 
   @Column({ nullable: true })
@@ -96,7 +93,6 @@ export class User {
   @BeforeUpdate()
   async setNameBirthId() {
     const birthDate = new Date(this.birthDate);
-    console.log(birthDate);
     const month = birthDate.getMonth() + 1; // JS에서 월은 0부터 시작하므로 1을 더해줍니다.
     const day = birthDate.getDate();
     const formattedMonth = month.toString().padStart(2, '0');

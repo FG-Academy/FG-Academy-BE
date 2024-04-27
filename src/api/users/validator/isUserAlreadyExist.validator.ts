@@ -16,13 +16,11 @@ export class IsUserAlreadyExist implements ValidatorConstraintInterface {
   ) {}
 
   async validate(email: string): Promise<boolean> {
-    console.log(email);
     const user = await this.usersRepository.findOne({
       where: {
         email,
       },
     });
-    console.log(user);
     return !user;
   }
 

@@ -69,7 +69,6 @@ export class AdminService {
       },
       relations: ['enrollments', 'enrollments.course'],
     });
-    console.log(user);
     return instanceToPlain(user);
   }
 
@@ -94,7 +93,6 @@ export class AdminService {
       thumbnailImagePath: filepath,
       ...createCourseDto,
     });
-    console.log(newCourseData);
 
     await this.courseRepository.save(newCourseData);
 
@@ -396,7 +394,6 @@ export class AdminService {
     updateCourseDto: UpdateCourseDto,
     filepath: string,
   ) {
-    console.log(updateCourseDto);
     const course = await this.courseRepository.findOne({
       where: { courseId },
       relations: ['lectures'],

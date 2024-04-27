@@ -37,9 +37,6 @@ export class CoursesService {
       ...courseData,
     });
 
-    console.log(typeof thumbnailImage.path);
-    console.log(newCourseData);
-
     await this.courseRepository.save(newCourseData);
 
     return { message: 'Success' };
@@ -67,13 +64,11 @@ export class CoursesService {
     }
 
     const newLectures = createLectureDtos.map((lecture) => {
-      // console.log(lecture);
       return this.lectureRepository.create({
         ...lecture,
         courseId,
       });
     });
-    // console.log(newLectures);
 
     await this.lectureRepository.insert(newLectures);
 
@@ -107,31 +102,8 @@ export class CoursesService {
       .addOrderBy('quizAnswer.id', 'ASC')
       .getOne();
 
-    // console.log(course);
-
     return course.lectures;
   }
-
-  // async getAllLecturesByCourseId(courseId: number): Promise<any> {
-  //   const result = await this.lectureRepository.find({
-  //     relations: ['course'],
-  //     where: { courseId },
-  //   });
-
-  //   if (!result) {
-  //     throw new NotFoundException(`Lectures with ID "${courseId}" not found`);
-  //   }
-
-  //   // const lectures = result.reduce((acc, lecture) => {
-  //   //   const { lectureId, ...rest } = lecture;
-  //   //   acc[lectureId] = rest;
-  //   //   return acc;
-  //   // }, {});
-
-  //   // console.log(lecturesObject[3]);
-  //   return result;
-  //   // return { lectures, length: result.length };
-  // }
 
   async getLecturesProgress(courseId: number, userId: number) {
     const lectures = await this.lectureRepository.find({
@@ -139,14 +111,10 @@ export class CoursesService {
       relations: ['lectureTimeRecords', 'quizzes.quizSubmits'],
     });
 
-    // console.log(lectures[0].quizzes);
-
     const lectureProgresses = lectures.map((lecture) => {
-      // console.log(lecture);
       const progress = lecture.lectureTimeRecords.find(
         (lp) => lp.userId === userId,
       );
-      // console.log(progress);
 
       return {
         lectureId: lecture.lectureId,
@@ -229,13 +197,6 @@ export class CoursesService {
     });
     // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
     const lastStudyLecture = completedLectures[0];
-
-    // 코스의 전체 강의 개수
-    console.log(totalCourseLength);
-    // 코스에 포함되어 있는 수강완료한 강의 개수
-    console.log(completedLectures);
-    // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
-    console.log(lastStudyLecture?.lectureId);
 
     // 수강신청 이력이 남아있으면 이어듣기, 아니면 수강 신청하기
     if (isExist) {

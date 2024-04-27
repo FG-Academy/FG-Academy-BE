@@ -8,7 +8,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOneOptions, Repository } from 'typeorm';
+import { DataSource, EntityManager, FindOneOptions, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
@@ -18,6 +18,8 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { v4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
 import { instanceToPlain } from 'class-transformer';
+import * as ExcelJS from 'exceljs';
+import { Enrollment } from 'src/entities/enrollment.entity';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +30,9 @@ export class UsersService {
     private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
     private dataSource: DataSource,
     private readonly mailerService: MailerService,
+    @InjectRepository(Enrollment)
+    private enrollmentRepository: Repository<Enrollment>,
+    private entityManager: EntityManager,
   ) {}
 
   async findAll() {
@@ -81,14 +86,13 @@ export class UsersService {
   }
 
   async findByNameBirthId(nameBirthId: string): Promise<User> {
-    const user = await this.usersRepository.findOne({
+    const user = await this.usersRepository.findOneOrFail({
       where: {
         nameBirthId,
         status: 'active',
       },
     });
 
-    console.log(user);
     return user;
   }
 
@@ -144,7 +148,6 @@ export class UsersService {
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {
-    console.log(data);
     const user = await this.usersRepository.findOne({
       where: {
         userId,
@@ -236,5 +239,87 @@ export class UsersService {
       },
     );
     return result;
+  }
+
+  async createUsersByFile(): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(
+      `${__dirname}/../../../src/api/users/0412.xlsx`,
+    );
+    const worksheet = workbook.getWorksheet('전체');
+
+    try {
+      await this.entityManager.transaction(
+        async (transactionalEntityManager) => {
+          for (const row of worksheet.getRows(2, worksheet.rowCount - 1)) {
+            const id = row.getCell(1).value.toString();
+            // 강의 완수 데이터를 처리
+            const essenceValue = row.getCell(5).value.toString();
+            const doctrineValue = row.getCell(6).value.toString();
+
+            // "완료"일 경우 21을 반환하고, 아닐 경우 parseInt로 숫자 변환
+            const essencePercentage =
+              essenceValue === '완료' ? 21 : parseInt(essenceValue);
+            const doctrinePercentage =
+              doctrineValue === '완료' ? 54 : parseInt(doctrineValue);
+
+            const [name, birthDate] = this.extractUserInfo(id);
+
+            const password = id; // 예시로 ID를 비밀번호로 사용
+            const newUser = transactionalEntityManager.create(User, {
+              nameBirthId: id,
+              name,
+              birthDate,
+              password,
+            });
+            await transactionalEntityManager.save(newUser);
+
+            const essenceCompleted = await this.calculateCompleted(
+              21,
+              essencePercentage,
+            );
+            const doctrineCompleted = await this.calculateCompleted(
+              54,
+              doctrinePercentage,
+            );
+
+            console.log(newUser, essenceCompleted, doctrineCompleted);
+
+            await transactionalEntityManager.save(Enrollment, {
+              user: newUser,
+              courseId: 1,
+              completedNumber: essenceCompleted,
+            });
+            await transactionalEntityManager.save(Enrollment, {
+              user: newUser,
+              courseId: 2,
+              completedNumber: doctrineCompleted,
+            });
+          }
+        },
+      );
+    } catch (err) {
+      console.error('Error during transaction:', err);
+      throw err; // 에러를 다시 던져서 호출자에게 알립니다.
+    }
+  }
+
+  private async calculateCompleted(total: number, percentage: number | string) {
+    console.log(total, percentage);
+    if (percentage === '완료') {
+      return total;
+    }
+    if (typeof percentage === 'number') {
+      return Math.round(total * (percentage / 100));
+    }
+  }
+  private extractUserInfo(idStr: string): [string, string] {
+    const nameMatch = /^[^\d]+/.exec(idStr);
+    const birthMatch = /(\d{4})$/.exec(idStr);
+    const userName = nameMatch ? nameMatch[0] : null;
+    const birthDate = birthMatch
+      ? `1970-${birthMatch[1].substring(0, 2)}-${birthMatch[1].substring(2, 4)}`
+      : '01-01';
+    return [userName, birthDate];
   }
 }
