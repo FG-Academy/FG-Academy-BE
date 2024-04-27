@@ -57,11 +57,6 @@ export class UsersController {
     return result;
   }
 
-  @Get(':userId')
-  async findOneByUserId(@Param('userId') userId: number) {
-    return await this.usersService.findOneByUserId({ where: { userId } });
-  }
-
   @Patch(':userId')
   async updateOneByUserId(
     @Body() dto: UpdateUserDto,

@@ -1,4 +1,4 @@
-import { IsArray, IsNumber } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateQuizAnswerDto {
   @IsNumber()
@@ -6,4 +6,8 @@ export class CreateQuizAnswerDto {
 
   @IsArray()
   multipleAnswer: number[];
+
+  @IsOptional()
+  @IsString()
+  submittedAnswer: string | null;
 }

@@ -99,19 +99,34 @@ export class QuizzesService {
         '이미 답안을 제출한 퀴즈입니다.',
         HttpStatus.BAD_REQUEST,
       );
-    } else {
-      await Promise.all(
-        data.multipleAnswer.map(async (ele) => {
-          const quizAnswerData = this.quizSubmitRepository.create({
-            user: { userId: userId },
-            quiz: { quizId: data.quizId },
-            multipleAnswer: ele,
-          });
-
-          await this.quizSubmitRepository.save(quizAnswerData);
-        }),
-      );
     }
-    return { message: '퀴즈가 성공적으로 제출되었습니다.' };
+    try {
+      if (data.submittedAnswer === null) {
+        await Promise.all(
+          data.multipleAnswer.map(async (ele) => {
+            const quizAnswerData = this.quizSubmitRepository.create({
+              user: { userId: userId },
+              quiz: { quizId: data.quizId },
+              multipleAnswer: ele,
+            });
+
+            await this.quizSubmitRepository.save(quizAnswerData);
+          }),
+        );
+      } else {
+        const DescriptiveAnswerData = this.quizSubmitRepository.create({
+          user: { userId },
+          quiz: { quizId: data.quizId },
+          multipleAnswer: 0,
+          submittedAnswer: data.submittedAnswer,
+        });
+
+        await this.quizSubmitRepository.save(DescriptiveAnswerData);
+      }
+      return { message: '퀴즈가 성공적으로 제출되었습니다.' };
+    } catch (error) {
+      console.log(error);
+      return error;
+    }
   }
 }

@@ -6,17 +6,22 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { UpdateCourseDto } from './dto/update-course.dto';
 import { UpdateLecturesDto } from './dto/update-lectures.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 import { FileUploadInterceptor } from './interceptor/fileUploadInterceptor';
+import { Roles } from '../users/decorators/role.decorator';
 import { Request } from 'express';
+import { FeedbackDescriptiveQuiz } from './dto/feedbackDescriptiveQuiz.dto';
+import { CreateQuizDto } from './dto/create-new-quiz.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { DeleteCourseDto } from './dto/delete-course.dto';
 
+@Roles('admin')
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -85,5 +90,45 @@ export class AdminController {
   async findAllCurriculums() {
     const result = await this.adminService.findAllCurriculums();
     return { data: result };
+  }
+  // 가드를 고려하여 Param이 없는 라우트 먼저 선언해야함
+
+  @Get('quizzes')
+  async findQuizData() {
+    return await this.adminService.findQuizAll();
+  }
+
+  @Post('quizzes/feedback/:userId/:quizId')
+  async feedbackDescriptiveQuiz(
+    @Param('userId') userId: number,
+    @Param('quizId') quizId: number,
+    @Body() feedbackDescriptiveQuizDto: FeedbackDescriptiveQuiz,
+  ) {
+    console.log(feedbackDescriptiveQuizDto);
+    return await this.adminService.feedbackQuiz(
+      userId,
+      quizId,
+      feedbackDescriptiveQuizDto,
+    );
+  }
+
+  @Get(':userId')
+  async findOneByUserId(@Param('userId') userId: number) {
+    return await this.adminService.findOneByUserId({ where: { userId } });
+  }
+
+  @Roles('admin')
+  @Get('/quizzes/:userId')
+  getMyQuizList(@Param('userId') userId: number, @Query('type') type: string) {
+    const queryQuizType = type;
+    return this.adminService.findMultipleQuizList(userId, queryQuizType);
+  }
+
+  @Post('/quizzes/register/:lectureId')
+  createNewQuiz(
+    @Param('lectureId') lectureId: number,
+    @Body() createQuizDto: CreateQuizDto,
+  ) {
+    return this.adminService.createNewQuiz(lectureId, createQuizDto);
   }
 }

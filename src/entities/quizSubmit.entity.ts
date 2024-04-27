@@ -25,7 +25,10 @@ export class QuizSubmit {
   @Column('text', { nullable: true })
   feedbackComment: string;
 
-  @Column({ default: false, comment: '0: 미채점 / 1: 정답 / 2: 오답' })
+  @Column({
+    default: false,
+    comment: '(주관식의 경우) 0: 미채점 / 1: 정답 / 2: 오답',
+  })
   status: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
