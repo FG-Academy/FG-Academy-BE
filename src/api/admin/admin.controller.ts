@@ -127,4 +127,18 @@ export class AdminController {
   ) {
     return this.adminService.createNewQuiz(lectureId, createQuizDto);
   }
+
+  @Patch('/quizzes/edit/:lectureId/:quizId')
+  patchQuizData(
+    @Param('lectureId') lectureId: number,
+    @Param('quizId') quizId: number,
+    @Body() updateQuizDto: CreateQuizDto,
+  ) {
+    return this.adminService.updateQuizData(lectureId, quizId, updateQuizDto);
+  }
+
+  @Delete('/quizzes/delete/:quizId')
+  deleteQiuz(@Param('quizId') quizId: number) {
+    return this.adminService.deleteQuiz(quizId);
+  }
 }

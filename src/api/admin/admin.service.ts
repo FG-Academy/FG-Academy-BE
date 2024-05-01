@@ -637,4 +637,112 @@ export class AdminService {
       await queryRunner.release();
     }
   }
+
+  async deleteQuiz(quizId: number) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+
+    // 트랜잭션 시작
+    await queryRunner.startTransaction();
+
+    try {
+      const deleteQuiz = await this.quizRepository.delete({
+        quizId: quizId,
+      });
+      await queryRunner.commitTransaction();
+      return { message: '성공적으로 삭제했습니다!' };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new error();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async updateQuizData(
+    lectureId: number,
+    quizId: number,
+    updateQuizDto: CreateQuizDto,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+
+    // 트랜잭션 시작
+    await queryRunner.startTransaction();
+
+    const findQuizData = await this.quizRepository.findOne({
+      where: { quizId: quizId },
+      relations: ['quizAnswers'],
+    });
+
+    if (!findQuizData) {
+      throw new NotFoundException('퀴즈 데이터를 찾을 수 없습니다.');
+    }
+
+    try {
+      // 퀴즈 정보부터 저장
+      await this.quizRepository.update(
+        { quizId: quizId },
+        {
+          question: updateQuizDto.question ?? findQuizData.question,
+          quizType: updateQuizDto.quizType ?? findQuizData.quizType,
+        },
+      );
+
+      if (updateQuizDto.quizType === 'multiple') {
+        // 기존 quizAnswers를 유지하면서 업데이트
+        const existingAnswerMap = new Map(
+          findQuizData.quizAnswers.map((answer) => [answer.itemIndex, answer]),
+        );
+        console.log(existingAnswerMap);
+        const maxExistingIndex = Math.max(...existingAnswerMap.keys());
+
+        const updatedAnswers = [];
+        for (
+          let i = 1;
+          i <= Math.max(updateQuizDto.quizInfo.length, maxExistingIndex);
+          i++
+        ) {
+          const existingAnswer = existingAnswerMap.get(i);
+          const updatedInfo = updateQuizDto.quizInfo.find(
+            (info) => info.itemIndex === i,
+          );
+
+          if (existingAnswer && updatedInfo) {
+            // 기존 답변 업데이트
+            existingAnswer.item = updatedInfo.item;
+            existingAnswer.isAnswer = updatedInfo.isAnswer;
+            updatedAnswers.push(existingAnswer);
+          } else if (existingAnswer) {
+            // 기존 답변이 있지만 업데이트된 정보가 없으면 삭제
+            await this.quizAnswerRepository.remove(existingAnswer);
+          } else if (updatedInfo) {
+            // 새로운 답변 생성
+            const quizAnswer = this.quizAnswerRepository.create({
+              quizId: quizId,
+              itemIndex: updatedInfo.itemIndex,
+              item: updatedInfo.item,
+              isAnswer: updatedInfo.isAnswer,
+            });
+            updatedAnswers.push(quizAnswer);
+          }
+        }
+
+        findQuizData.quizAnswers = updatedAnswers;
+        await this.quizAnswerRepository.save(updatedAnswers);
+        await queryRunner.commitTransaction();
+
+        return { message: '퀴즈 수정이 완료되었습니다!' };
+      } else {
+        await this.quizAnswerRepository.remove(findQuizData.quizAnswers);
+        await queryRunner.commitTransaction();
+        return { message: '퀴즈 수정이 완료되었습니다!' };
+      }
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new error();
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }
