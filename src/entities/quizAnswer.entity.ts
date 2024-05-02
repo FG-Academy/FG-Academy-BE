@@ -37,7 +37,9 @@ export class QuizAnswer {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Quiz, (quiz) => quiz.quizAnswers)
+  @ManyToOne(() => Quiz, (quiz) => quiz.quizAnswers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'quizId' })
   quiz: Quiz;
 }
