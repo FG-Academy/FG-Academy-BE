@@ -28,6 +28,6 @@ async function bootstrap() {
   // app.useGlobalFilters(new GlobalExceptionFilter());
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.use(cookieParser());
-  await app.listen(3000);
+  await app.listen(8080);
 }
 bootstrap();
