@@ -224,7 +224,7 @@ export class AdminService {
     Object.keys(groupedResults).forEach((key) => {
       const quiz = groupedResults[key];
 
-      console.log(quiz.status);
+      // console.log(quiz.status);
       if (quiz.quizType === 'multiple') {
         quiz.corrected =
           quiz.submittedAnswers.sort((a, b) => a - b).join(',') ===

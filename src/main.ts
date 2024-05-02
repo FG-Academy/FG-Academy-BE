@@ -1,12 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { LoggerMiddleware } from './utils/logger.middleware';
+// import { LoggerMiddleware } from './utils/logger.middleware';
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -18,7 +19,7 @@ async function bootstrap() {
       },
     }),
   );
-  app.use((req, res, next) => new LoggerMiddleware().use(req, res, next));
+  // app.use((req, res, next) => new LoggerMiddleware().use(req, res, next));
   app.enableCors({
     origin: true,
     credentials: true,

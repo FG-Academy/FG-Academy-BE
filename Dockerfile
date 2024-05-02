@@ -1,28 +1,20 @@
-# Build stage
-FROM node:20.4.0-alpine3.18 AS build
+# Base stage for installing dependencies and building
+FROM node:20.4.0-alpine3.18 AS development
+
+# Set the working directory
 WORKDIR /app
 
+# Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm ci
+
+# Install dependencies including 'devDependencies'
+RUN npm install
+
+# Copy the rest of the application code
 COPY . .
-RUN npm run build
 
-# Production stage
-FROM node:20.4.0-alpine3.18 AS production
-
-# 환경변수를 production으로 설정
-ENV NODE_ENV=production
-
-WORKDIR /app
-
-# Production dependencies만 설치
-COPY package*.json ./
-RUN npm ci --only=production
-
-# 빌드한 파일을 복사
-COPY --from=build /app/dist ./dist
-
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Production 모드로 앱 시작
-CMD ["npm", "run", "start:prod"]
+# Start the application
+CMD ["npm", "run", "start:dev"]

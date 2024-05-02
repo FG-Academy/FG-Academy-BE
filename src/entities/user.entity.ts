@@ -10,7 +10,7 @@ import { QuizSubmit } from './quizSubmit.entity';
 import { LectureTimeRecord } from './lectureTimeRecord.entity';
 import { Enrollment } from './enrollment.entity';
 import { Exclude } from 'class-transformer';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 @Entity()
 export class User {

@@ -39,7 +39,7 @@ export class AuthController {
   @UseInterceptors(TokenInterceptor)
   @Post('sign-in')
   async signIn(@Body() signInDto: SignInDto) {
-    console.log(signInDto);
+    // console.log(signInDto);
     return await this.authService.signIn(signInDto);
   }
 

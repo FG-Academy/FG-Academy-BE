@@ -4,7 +4,7 @@ import { UsersService } from 'src/api/users/users.service';
 import { SignUpDto } from './dto/signUp.dto';
 import { User } from 'src/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { SignInDto } from './dto/signIn.dto';
 import { RefreshTokenIdsStorage } from './refreshTokenIdsStorage';
 import { JwtRefreshStrategy } from './strategies/jwtRefresh.strategy';
@@ -34,7 +34,6 @@ export class AuthService {
       signInDto.nameBirthId,
       signInDto.password,
     );
-    console.log(user);
     if (!user) {
       throw new UnauthorizedException('Invalid username or password');
     }
@@ -67,7 +66,6 @@ export class AuthService {
     password: string,
   ): Promise<Partial<User> | null> {
     const user = await this.usersService.findByNameBirthId(nameBirthId);
-    console.log(user);
     if (user && (await user.checkPassword(password))) {
       const { password, ...result } = user;
       return result;
