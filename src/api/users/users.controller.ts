@@ -75,6 +75,7 @@ export class UsersController {
     return result;
   }
 
+  @Public()
   @Post('email')
   async findEmailExist(@Body() emailDto: EmailDto) {
     const result = await this.usersService.findEmailExist(emailDto.email);

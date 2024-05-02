@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, FindOneOptions, Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
@@ -283,7 +283,7 @@ export class UsersService {
               doctrinePercentage,
             );
 
-            console.log(newUser, essenceCompleted, doctrineCompleted);
+            // console.log(newUser, essenceCompleted, doctrineCompleted);
 
             await transactionalEntityManager.save(Enrollment, {
               user: newUser,
@@ -305,7 +305,7 @@ export class UsersService {
   }
 
   private async calculateCompleted(total: number, percentage: number | string) {
-    console.log(total, percentage);
+    // console.log(total, percentage);
     if (percentage === '완료') {
       return total;
     }

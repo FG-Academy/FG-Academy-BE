@@ -100,7 +100,7 @@ export class AdminController {
     @Param('quizId') quizId: number,
     @Body() feedbackDescriptiveQuizDto: FeedbackDescriptiveQuiz,
   ) {
-    console.log(feedbackDescriptiveQuizDto);
+    // console.log(feedbackDescriptiveQuizDto);
     return await this.adminService.feedbackQuiz(
       userId,
       quizId,

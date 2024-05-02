@@ -41,10 +41,10 @@ export class QuizzesController {
   saveUserQuizAnswer(
     @Param('courseId') courseId: number,
     @Param('lectureId') lectureId: number,
-    @AuthUser('userId') userId,
+    @AuthUser('userId') userId: number,
     @Body() data: CreateQuizAnswerDto,
   ) {
-    console.log(userId);
+    // console.log(userId);
     return this.quizzesService.saveUserAnswer(
       courseId,
       lectureId,
