@@ -20,6 +20,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { instanceToPlain } from 'class-transformer';
 import * as ExcelJS from 'exceljs';
 import { Enrollment } from 'src/entities/enrollment.entity';
+import { Course } from 'src/entities/course.entity';
 
 @Injectable()
 export class UsersService {
@@ -32,6 +33,8 @@ export class UsersService {
     private readonly mailerService: MailerService,
     @InjectRepository(Enrollment)
     private enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(Course)
+    private courseRepository: Repository<Course>,
     private entityManager: EntityManager,
   ) {}
 
@@ -258,10 +261,10 @@ export class UsersService {
             const doctrineValue = row.getCell(6).value.toString();
 
             // "완료"일 경우 21을 반환하고, 아닐 경우 parseInt로 숫자 변환
-            const essencePercentage =
-              essenceValue === '완료' ? 21 : parseInt(essenceValue);
-            const doctrinePercentage =
-              doctrineValue === '완료' ? 54 : parseInt(doctrineValue);
+            // const essencePercentage =
+            //   essenceValue === '완료' ? 21 : parseInt(essenceValue);
+            // const doctrinePercentage =
+            //   doctrineValue === '완료' ? 54 : parseInt(doctrineValue);
 
             const [name, birthDate] = this.extractUserInfo(id);
 
@@ -276,23 +279,30 @@ export class UsersService {
 
             const essenceCompleted = await this.calculateCompleted(
               21,
-              essencePercentage,
+              essenceValue,
             );
             const doctrineCompleted = await this.calculateCompleted(
               54,
-              doctrinePercentage,
+              doctrineValue,
             );
 
             // console.log(newUser, essenceCompleted, doctrineCompleted);
 
+            const oneCourse = await this.courseRepository.findOneOrFail({
+              where: { courseId: 1 },
+            });
+            const twoCourse = await this.courseRepository.findOneOrFail({
+              where: { courseId: 2 },
+            });
+
             await transactionalEntityManager.save(Enrollment, {
               user: newUser,
-              courseId: 1,
+              course: oneCourse,
               completedNumber: essenceCompleted,
             });
             await transactionalEntityManager.save(Enrollment, {
               user: newUser,
-              courseId: 2,
+              course: twoCourse,
               completedNumber: doctrineCompleted,
             });
           }
@@ -310,7 +320,7 @@ export class UsersService {
       return total;
     }
     if (typeof percentage === 'number') {
-      return Math.round(total * (percentage / 100));
+      return Math.floor(total * (percentage / 100));
     }
   }
   private extractUserInfo(idStr: string): [string, string] {

@@ -7,11 +7,12 @@ import { IsUserAlreadyExist } from './validator/isUserAlreadyExist.validator';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Enrollment } from 'src/entities/enrollment.entity';
+import { Course } from 'src/entities/course.entity';
 // import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, LectureTimeRecord, Enrollment]),
+    TypeOrmModule.forFeature([User, LectureTimeRecord, Enrollment, Course]),
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
