@@ -75,11 +75,12 @@ export class CoursesController {
     return this.coursesService.getLecturesProgress(courseId, userId);
   }
 
+  // TODO: 유저의 레벨에 따라서 수강 신청을 막거나 허용하는 Validation이 필요함
   @Post(':courseId/enrollment')
   enrollCourse(@Param('courseId') courseId: number, @AuthUser() user) {
-    const userId = user.userId;
-    // 유저의 레벨에 따라서 수강 신청을 막거나 허용하는 Validation이 필요함
-    return this.coursesService.enrollCourse(courseId, userId);
+    const { userId, level } = user;
+
+    return this.coursesService.enrollCourse(courseId, userId, level);
   }
 
   //! 사용자가 특정 코스에 참여했는지 여부를 알기 위해 동작하는 API
