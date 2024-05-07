@@ -532,7 +532,7 @@ export class AdminService {
       );
       // 모든 제출된 답안이 정답인지 확인하여 하나라도 틀리면 isAnswer를 false로 설정합니다.
       if (
-        !submit.quiz.quizAnswers.some(
+        !submit.quiz.quizAnswers.every(
           (answer) =>
             answer.isAnswer && answer.itemIndex === submit.multipleAnswer,
         )

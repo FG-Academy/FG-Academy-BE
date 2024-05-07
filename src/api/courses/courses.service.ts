@@ -13,6 +13,9 @@ import { Lecture } from 'src/entities/lecture.entity';
 import { CreateLectureDto } from './dto/create-lecture.dto';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
+import moment from 'moment-timezone';
+
+moment.tz.setDefault('Asia/Seoul');
 
 @Injectable()
 export class CoursesService {
@@ -136,12 +139,41 @@ export class CoursesService {
     };
   }
 
-  async enrollCourse(courseId: number, userId: number) {
+  async enrollCourse(courseId: number, userId: number, level: string) {
     // 이미 사용자가 해당 코스에 대해서 수강신청을 완료했는지 확인
     const isExist = await this.enrollmentRepository.findOne({
       where: { user: { userId }, course: { courseId } },
     });
-    // 중복이 있으면 error
+
+    const courseInfo = await this.courseRepository.findOne({
+      where: { courseId: courseId },
+    });
+
+    // 사용자의 레벨이 코스 수강 최소 레벨에 도달하지 못하면 수강 신청 불가 (admin 제외)
+    if (level !== 'admin') {
+      const userLevel = parseInt(level[1]);
+      const courseLevel = parseInt(courseInfo.level[1]);
+
+      if (courseLevel > userLevel) {
+        throw new HttpException(
+          '수강할 수 있는 레벨이 아닙니다.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    // 코스 마감기한이 아닌데 수강 신청하려고 하는 경우 수강 신청 불가
+    const courseCloseDate = courseInfo.finishDate;
+    const courseStartDate = courseInfo.openDate;
+    const currentDate = moment();
+
+    if (!currentDate.isBetween(courseStartDate, courseCloseDate)) {
+      throw new HttpException(
+        '수강 가능한 날짜가 아닙니다.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     if (isExist) {
       throw new HttpException(
         '이미 수강신청한 코스입니다.',
@@ -198,6 +230,18 @@ export class CoursesService {
     // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
     const lastStudyLecture = completedLectures[0];
 
+    if (totalCourseLength === completedLectures.length) {
+      console.log('object');
+      return {
+        isTaking: null,
+        message: '수강완료',
+        totalCount: totalCourseLength,
+        completedLectures: completedLectures.length,
+        lastStudyLecture: lastStudyLecture?.lectureId
+          ? lastStudyLecture.lectureId
+          : null,
+      };
+    }
     // 수강신청 이력이 남아있으면 이어듣기, 아니면 수강 신청하기
     if (isExist) {
       return {
