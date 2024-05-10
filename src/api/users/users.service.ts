@@ -127,6 +127,7 @@ export class UsersService {
 
   async updateCompleted(userId: number, lectureId: number) {
     // 예외처리를 잘 해야할 듯 하다.
+    console.log(userId, lectureId);
     const isExist = await this.lectureTimeRecordRepository.findOne({
       where: { user: { userId }, lecture: { lectureId } },
     });

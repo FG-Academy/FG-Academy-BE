@@ -1,3 +1,4 @@
+import { AuthUser } from './../users/decorators/user.decorator';
 import {
   Body,
   Controller,
@@ -12,7 +13,6 @@ import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
 import { CreateLectureDto } from './dto/create-lecture.dto';
-import { AuthUser } from '../users/decorators/user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('courses')
@@ -89,6 +89,20 @@ export class CoursesController {
     const userId = user.userId;
 
     return this.coursesService.getEnrollmentData(courseId, userId);
+  }
+
+  @Get('myLectures/:courseId')
+  getLectures(@AuthUser() user, @Param('courseId') courseId: number) {
+    const userId = user.userId;
+    return this.coursesService.findAllLecturesByCourseId(userId, courseId);
+  }
+
+  @Get('lectures/:lectureId')
+  getLectureRecords(
+    @Param('lectureId') lectureId: number,
+    @AuthUser('userId') userId,
+  ) {
+    return this.coursesService.getLectureRecords(lectureId, userId);
   }
 
   //TODO: 내 강의실에는 수강 신청한 모든 코스에 대한 수강 완료 강의와 그 전체 길이를 가져와야하는데, 그러면 쿼리가 너무 복잡해지지 않을까?

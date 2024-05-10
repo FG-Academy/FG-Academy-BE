@@ -1,8 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { QuizzesService } from './quizzes.service';
-// import { Public } from '../auth/decorators/public.decorator';
-import { CreateQuizAnswerDto } from './dto/create-quizAnswr.dto';
+import { CreateQuizAnswerDto } from './dto/create-quizAnswer.dto';
 import { AuthUser } from '../users/decorators/user.decorator';
 
 @Controller('quizzes')
@@ -15,7 +14,6 @@ export class QuizzesController {
     return { message: 'Quizzes created successfully' };
   }
 
-  // @Public()
   @Get(':courseId')
   findAll(
     @Param('courseId') courseId: number,
@@ -26,30 +24,20 @@ export class QuizzesController {
     return this.quizzesService.findAllByCourseId(courseId, userId);
   }
 
-  // @Public()
   @Get(':courseId/:lectureId')
   findGetQuiz(
     @Param('courseId') courseId: number,
     @Param('lectureId') lectureId: number,
-    @AuthUser() user,
+    @AuthUser('userId') userId,
   ) {
-    const userId = user.userId;
     return this.quizzesService.findAllLectureQuiz(courseId, lectureId, userId);
   }
 
-  @Post(':courseId/:lectureId')
+  @Post('answer')
   saveUserQuizAnswer(
-    @Param('courseId') courseId: number,
-    @Param('lectureId') lectureId: number,
     @AuthUser('userId') userId: number,
     @Body() data: CreateQuizAnswerDto,
   ) {
-    // console.log(userId);
-    return this.quizzesService.saveUserAnswer(
-      courseId,
-      lectureId,
-      userId,
-      data,
-    );
+    return this.quizzesService.saveUserAnswer(userId, data);
   }
 }

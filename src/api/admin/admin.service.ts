@@ -21,6 +21,7 @@ import { DeleteCourseDto } from './dto/delete-course.dto';
 import { DataSource, FindOneOptions, Repository, In } from 'typeorm';
 import { FeedbackDescriptiveQuiz } from './dto/feedbackDescriptiveQuiz.dto';
 import { CreateQuizDto } from './dto/create-new-quiz.dto';
+import { FeedbackDto } from './dto/feedback.dto';
 
 @Injectable()
 export class AdminService {
@@ -148,6 +149,50 @@ export class AdminService {
     }
 
     return instanceToPlain(user);
+  }
+
+  async findQuizAll2() {
+    const submittedQuiz = await this.quizSubmitRepository.find({
+      relations: ['user', 'quiz', 'quiz.lecture', 'quiz.lecture.course'],
+      where: { multipleAnswer: 0 },
+    });
+    // 데이터를 원하는 형식으로 매핑
+    const mappedData = submittedQuiz.map((sq) => ({
+      id: sq.id,
+      userId: sq.user.userId,
+      quizId: sq.quiz.quizId,
+      name: sq.user.name,
+      position: sq.user.position,
+      departmentName: sq.user.departmentName,
+      lectureTitle: sq.quiz.lecture.title,
+      courseTitle: sq.quiz.lecture.course.title,
+      status: sq.status,
+      user: sq.user,
+      quiz: sq.quiz,
+    }));
+
+    return instanceToPlain(mappedData);
+  }
+
+  async getDescriptiveQuiz(userId: number, quizId: number) {
+    const descriptiveQuiz = await this.quizSubmitRepository.findOne({
+      where: { multipleAnswer: 0, user: { userId }, quiz: { quizId } },
+      relations: ['user', 'quiz', 'quiz.lecture', 'quiz.lecture.course'],
+    });
+
+    // 데이터를 원하는 형식으로 매핑
+    // const mappedData = descriptiveQuiz.map((dq) => ({
+    //   id: dq.id,
+    //   userId: dq.userId,
+    //   multipleAnswer: dq.multipleAnswer,
+    //   answer: dq.answer,
+    //   submittedAnswer: dq.submittedAnswer,
+    //   feedbackComment: dq.feedbackComment,
+    //   status: dq.status,
+    //   user: dq.user,
+    // }));
+    console.log(descriptiveQuiz);
+    return instanceToPlain(descriptiveQuiz);
   }
 
   async findQuizAll() {
@@ -283,112 +328,6 @@ export class AdminService {
     });
   }
 
-  // async findQuizAll() {
-  //   const quizSubmissions = await this.quizSubmitRepository.find({
-  //     relations: [
-  //       'user',
-  //       'quiz',
-  //       'quiz.lecture',
-  //       'quiz.lecture.course',
-  //       'quiz.quizAnswers',
-  //     ],
-  //   });
-
-  //   const groupedResults = {};
-
-  //   for (const submission of quizSubmissions) {
-  //     const key = `${submission.user.userId}-${submission.quiz.quizId}`;
-
-  //     if (!groupedResults[key]) {
-  //       groupedResults[key] = {
-  //         userId: submission.user.userId,
-  //         name: submission.user.name,
-  //         department: submission.user.departmentName,
-  //         position: submission.user.position,
-  //         level: submission.user.level,
-  //         courseTitle: submission.quiz.lecture.course.title,
-  //         lectureTitle: submission.quiz.lecture.title,
-  //         quizId: submission.quiz.quizId,
-  //         quizTitle: submission.quiz.question,
-  //         quizContents: [],
-  //         quizContentNumber: [],
-  //         submittedAnswer: null,
-  //         quizType: submission.quiz.quizType,
-  //         answer: submission.quiz.quizAnswers
-  //           .filter((a) => a.isAnswer)
-  //           .map((a) => a.item),
-  //         answerNumber: submission.quiz.quizAnswers
-  //           .filter((a) => a.isAnswer)
-  //           .map((a) => a.itemIndex),
-  //         corrected: false,
-  //         feedback: submission.feedbackComment,
-  //         submittedDate: submission.updatedAt,
-  //       };
-  //     }
-
-  //     if (submission.quiz.quizType === 'multiple') {
-  //       const submittedIndex = submission.multipleAnswer;
-  //       const quizAnswer = submission.quiz.quizAnswers.find(
-  //         (a) => a.itemIndex === submittedIndex,
-  //       );
-  //       if (quizAnswer) {
-  //         groupedResults[key].quizContents.push(quizAnswer.item);
-  //         groupedResults[key].quizContentNumber.push(submittedIndex);
-  //       }
-  //     } else {
-  //       groupedResults[key].submittedAnswer = submission.submittedAnswer;
-  //     }
-  //   }
-
-  //   // 채점 로직: 모든 문항을 제출해야 하며, 잘못된 선택이 없어야 정답 처리
-  //   Object.keys(groupedResults).forEach((key) => {
-  //     const result = groupedResults[key];
-  //     if (result.quizType === 'multiple') {
-  //       const correctAnswers = result.answerNumber.sort();
-  //       const submittedAnswers = result.quizContentNumber.sort();
-
-  //       // 제출한 답안과 정답 배열이 완전히 일치하는지 확인
-  //       result.corrected =
-  //         JSON.stringify(correctAnswers) === JSON.stringify(submittedAnswers);
-  //     }
-  //   });
-
-  //   return Object.values(groupedResults);
-  // }
-
-  // async findPage(page: number) {
-  //   const take = 10; // 한 페이지 당 아이템 수
-  //   const skip = (page - 1) * take; // 건너뛸 아이템 수 계산
-
-  //   const users = await this.usersRepository.find({
-  //     take: take,
-  //     skip: skip,
-  //   });
-
-  //   const { count } = await this.findAll();
-  //   return {
-  //     users: instanceToPlain(users),
-  //     count,
-  //   };
-  // }
-
-  // async findByName(name: string) {
-  //   const users = await this.usersRepository.find({
-  //     where: {
-  //       name,
-  //     },
-  //   });
-  //   if (!users) {
-  //     throw new NotFoundException('User not found');
-  //   }
-
-  //   const { count } = await this.findAll();
-  //   return {
-  //     users: instanceToPlain(users),
-  //     count,
-  //   };
-  // }
-
   async updateCourse(
     courseId: number,
     updateCourseDto: UpdateCourseDto,
@@ -480,6 +419,44 @@ export class AdminService {
     return uniqueCurriculums.map((entry) => entry.curriculum);
   }
 
+  async getAllLectures(userId: number) {
+    const courses = await this.courseRepository.find({
+      relations: [
+        'lectures',
+        'lectures.quizzes',
+        'lectures.quizzes.quizAnswers',
+        'lectures.quizzes.quizSubmits',
+        'lectures.lectureTimeRecords',
+        'enrollments',
+      ],
+      where: { enrollments: { user: { userId } } },
+    });
+
+    if (!courses.length) {
+      return [];
+    }
+
+    // 모든 코스를 순회하며 각 렉처의 모든 관련 데이터를 userId에 맞게 필터링
+    courses.forEach((course) => {
+      course.lectures.forEach((lecture) => {
+        // 각 퀴즈의 quizSubmits 필터링
+        lecture.quizzes.forEach((quiz) => {
+          quiz.quizSubmits = quiz.quizSubmits.filter((quizSubmit) => {
+            return quizSubmit.userId === userId;
+          });
+        });
+        // 각 렉처의 lectureTimeRecords 필터링
+        lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
+          (record) => {
+            return record.userId === userId;
+          },
+        );
+      });
+    });
+
+    return courses;
+  }
+
   async findMultipleQuizList(userId: number, queryQuizType: string) {
     // 사용자가 제출한 모든 퀴즈 정보와 그 답안들을 조회합니다.
     const submittedQuizzes = await this.quizSubmitRepository
@@ -555,6 +532,84 @@ export class AdminService {
     }));
   }
 
+  async getSubmittedQuizByUserId(userId: number, queryQuizType: string) {
+    // 사용자가 제출한 퀴즈 중 multipleAnswer가 1인 것만 가져오고, 같은 quizId에 대해 최신 제출만 유지
+    const submissions = await this.quizSubmitRepository
+      .createQueryBuilder('quizSubmit')
+      .leftJoinAndSelect('quizSubmit.quiz', 'quiz')
+      .leftJoinAndSelect('quiz.lecture', 'lecture')
+      .leftJoinAndSelect('lecture.course', 'course')
+      .where('quizSubmit.userId = :userId', { userId })
+      .andWhere('quizSubmit.multipleAnswer = 1')
+      .orderBy('quizSubmit.quizId', 'DESC')
+      .addOrderBy('quizSubmit.createdAt', 'DESC')
+      .getMany();
+    console.log(queryQuizType);
+
+    const latestSubmissions = submissions
+      .reduce((acc, current) => {
+        const quizId = current.quiz.quizId;
+        if (!acc.has(quizId) || acc.get(quizId).createdAt < current.createdAt) {
+          acc.set(quizId, current);
+        }
+        return acc;
+      }, new Map())
+      .values();
+    console.log(latestSubmissions);
+
+    // 과목 별 데이터 구조 생성
+    const courseMap = new Map();
+    for (const submission of latestSubmissions) {
+      console.log(submission);
+      // const { course, lecture, quiz } = submission.quiz.lecture;
+      const course = submission.quiz.lecture.course;
+      const lecture = submission.quiz.lecture;
+      const quiz = submission.quiz;
+      let courseData = courseMap.get(course.courseId);
+      console.log(courseData);
+      if (!courseData) {
+        courseData = {
+          courseTitle: course.title,
+          lectures: new Map(),
+          totalQuizzes: 0,
+          correctQuizzes: 0,
+        };
+        courseMap.set(course.courseId, courseData);
+        courseData;
+      }
+      let lectureData = courseData.lectures.get(lecture.lectureId);
+      if (!lectureData) {
+        lectureData = {
+          lectureTitle: lecture.title,
+          quizzes: [],
+        };
+        courseData.lectures.set(lecture.lectureId, lectureData);
+      }
+      lectureData.quizzes.push({
+        question: quiz.question,
+        isCorrect: submission.status === 1,
+      });
+      courseData.totalQuizzes += 1;
+      if (submission.status === 1) {
+        courseData.correctQuizzes += 1;
+      }
+    }
+
+    // 과목 별 정답률을 계산하여 최종 결과 배열로 변환
+    const result = Array.from(courseMap.values()).map(
+      ({ courseTitle, lectures, totalQuizzes, correctQuizzes }) => ({
+        courseTitle,
+        lecture: Array.from(lectures.values()),
+        correctRate:
+          totalQuizzes > 0
+            ? Math.round((correctQuizzes / totalQuizzes) * 100)
+            : 0,
+      }),
+    );
+
+    return result;
+  }
+
   async feedbackQuiz(
     userId: number,
     quizId: number,
@@ -603,7 +658,7 @@ export class AdminService {
 
       const { quizType, question } = createNewQuiz;
 
-      const quizData = await this.quizRepository.create({
+      const quizData = this.quizRepository.create({
         lecture: { lectureId },
         quizType: quizType,
         quizIndex: findLastIndex === null ? 1 : findLastIndex.quizIndex + 1,
@@ -646,7 +701,7 @@ export class AdminService {
     await queryRunner.startTransaction();
 
     try {
-      const deleteQuiz = await this.quizRepository.delete({
+      await this.quizRepository.delete({
         quizId: quizId,
       });
       await queryRunner.commitTransaction();
@@ -744,5 +799,18 @@ export class AdminService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async feedbackToUserAnswer(quizId: number, userId: number, dto: FeedbackDto) {
+    await this.quizSubmitRepository.update(
+      {
+        quiz: { quizId },
+        userId,
+      },
+      {
+        feedbackComment: dto.feedbackComment,
+        status: dto.isAnswer,
+      },
+    );
   }
 }
