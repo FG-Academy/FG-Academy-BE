@@ -93,15 +93,6 @@ export class AuthService {
     return { accessToken, expiresIn: 10 * 60 * 60 };
   }
 
-  async invalidateToken(refreshToken: string): Promise<void> {
-    try {
-      const decoded = await this.jwtService.verifyAsync(refreshToken);
-      await this.refreshTokenIdsStorage.invalidate(decoded.sub);
-    } catch (error) {
-      throw new UnauthorizedException('fail to invalid token');
-    }
-  }
-
   async verifyPayload(payload: JwtPayload): Promise<User> {
     let user: User;
 

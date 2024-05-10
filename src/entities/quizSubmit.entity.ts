@@ -19,6 +19,9 @@ export class QuizSubmit {
   @Column({ comment: '객관식 답안 제출' })
   multipleAnswer: number;
 
+  @Column({ nullable: true, comment: 'JSON 형식의 객관식 답안' })
+  answer: string;
+
   @Column('text', { nullable: true })
   submittedAnswer: string;
 
@@ -26,7 +29,7 @@ export class QuizSubmit {
   feedbackComment: string;
 
   @Column({
-    default: false,
+    default: 0,
     comment: '(주관식의 경우) 0: 미채점 / 1: 정답 / 2: 오답',
   })
   status: number;

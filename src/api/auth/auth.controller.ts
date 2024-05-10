@@ -55,17 +55,6 @@ export class AuthController {
     );
   }
 
-  @Post('invalidate-token')
-  async invalidateToken(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const refreshToken = request.cookies['refreshToken'];
-    await this.authService.invalidateToken(refreshToken);
-    response.clearCookie('refreshToken');
-    return { message: 'Token invalidated successfully' };
-  }
-
   @Get('kakao-login')
   @Header('Content-Type', 'text/html')
   async kakaoRedirect(@Res() res: Response): Promise<void> {

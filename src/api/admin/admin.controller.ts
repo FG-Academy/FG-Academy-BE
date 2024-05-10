@@ -20,6 +20,8 @@ import { FeedbackDescriptiveQuiz } from './dto/feedbackDescriptiveQuiz.dto';
 import { CreateQuizDto } from './dto/create-new-quiz.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { DeleteCourseDto } from './dto/delete-course.dto';
+import { AuthUser } from '../users/decorators/user.decorator';
+import { FeedbackDto } from './dto/feedback.dto';
 
 @Roles('admin')
 @Controller('admin')
@@ -36,7 +38,6 @@ export class AdminController {
     return this.adminService.findUserById(userId);
   }
 
-  // @Public()
   @Get('/courses')
   findAll() {
     return this.adminService.findAll();
@@ -94,6 +95,13 @@ export class AdminController {
     return await this.adminService.findQuizAll();
   }
 
+  @Get('quizzes2')
+  async findQuizData2() {
+    return await this.adminService.findQuizAll2();
+  }
+
+  // @Get('quizzes/grade/')
+
   @Post('quizzes/feedback/:userId/:quizId')
   async feedbackDescriptiveQuiz(
     @Param('userId') userId: number,
@@ -113,11 +121,32 @@ export class AdminController {
     return await this.adminService.findOneByUserId({ where: { userId } });
   }
 
-  @Roles('admin')
-  @Get('/quizzes/:userId')
+  @Get('/quizzes2/:userId')
   getMyQuizList(@Param('userId') userId: number, @Query('type') type: string) {
     const queryQuizType = type;
     return this.adminService.findMultipleQuizList(userId, queryQuizType);
+  }
+
+  @Get('myLectures/:userId')
+  getAllLectures(@Param('userId') userId: number) {
+    return this.adminService.getAllLectures(userId);
+  }
+
+  @Get('quizzes/descriptive/:userId/:quizId')
+  getDescriptiveQuiz(
+    @Param('userId') userId: number,
+    @Param('quizId') quizId: number,
+  ) {
+    return this.adminService.getDescriptiveQuiz(userId, quizId);
+  }
+
+  @Get('/quizzes/:userId')
+  getSubmittedQuizByUserId(
+    @Param('userId') userId: number,
+    @Query('type') type: string,
+  ) {
+    const queryQuizType = type;
+    return this.adminService.getSubmittedQuizByUserId(userId, queryQuizType);
   }
 
   @Post('/quizzes/register/:lectureId')
@@ -140,5 +169,15 @@ export class AdminController {
   @Delete('/quizzes/delete/:quizId')
   deleteQiuz(@Param('quizId') quizId: number) {
     return this.adminService.deleteQuiz(quizId);
+  }
+
+  @Patch('quizzes/:quizId/feedback')
+  async updateQuizAnswer(
+    @Param('quizId') quizId,
+    @AuthUser('userId') userId,
+    @Body() dto: FeedbackDto,
+  ) {
+    await this.adminService.feedbackToUserAnswer(quizId, userId, dto);
+    return { message: 'Feedback updated successfully' };
   }
 }

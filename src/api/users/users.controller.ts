@@ -20,6 +20,7 @@ import { EmailDto } from './dto/email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { AuthUser } from './decorators/user.decorator';
 import { Roles } from './decorators/role.decorator';
+import { UpdateCompletedDto } from './dto/update-completed.dto';
 
 @Controller('users')
 export class UsersController {
@@ -106,13 +107,12 @@ export class UsersController {
   }
   // 사용자가 한 강의의 수강이 끝나면 해당 API가 작동해서 수강 완료 여부를 입력함
   // 강의 수강 완료 시에, 해당 API가 작동해서 강의 완료 여부를 판독할 수 있도록 해야함
-  @Patch('/completed')
+  @Patch('/completed/:lectureId')
   async updateCompleted(
-    @Body('lectureId') lectureId: number,
-    @AuthUser() user,
+    @Param('lectureId') lectureId: number,
+    // @Body() updateCompletedDto: UpdateCompletedDto,
+    @AuthUser('userId') userId,
   ) {
-    const userId = user.userId;
-
     await this.usersService.updateCompleted(userId, lectureId);
     return { message: 'Successfully updated completed status' };
   }

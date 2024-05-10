@@ -227,11 +227,16 @@ export class CoursesService {
         updatedAt: 'DESC', // 가장 최근에 업데이트된 순서로 정렬
       },
     });
+
+    const firstLecture = await this.lectureRepository.findOneBy({
+      courseId,
+      lectureNumber: 1,
+    });
+
     // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
     const lastStudyLecture = completedLectures[0];
 
     if (totalCourseLength === completedLectures.length) {
-      console.log('object');
       return {
         isTaking: null,
         message: '수강완료',
@@ -251,9 +256,9 @@ export class CoursesService {
         completedLectures: completedLectures.length,
         lastStudyLecture: lastStudyLecture?.lectureId
           ? lastStudyLecture.lectureId
-          : null,
+          : firstLecture.lectureId,
       };
-    } else
+    } else {
       return {
         isTaking: false,
         message: '수강 신청하기',
@@ -261,5 +266,72 @@ export class CoursesService {
         completedLectures: 0,
         lastStudyLecture: null,
       };
+    }
+  }
+
+  async getLectureRecords(lectureId: number, userId: number) {
+    const lecture = await this.lectureRepository.findOne({
+      where: { lectureId },
+      relations: ['lectureTimeRecords'],
+    });
+
+    if (!lecture) {
+      throw new HttpException('잘못된 강의입니다', HttpStatus.BAD_REQUEST);
+    }
+
+    const lectureRecords = await this.lectureTimeRecordRepository.findOneBy({
+      lecture: { lectureId },
+      userId,
+    });
+
+    if (lectureRecords) {
+      return lectureRecords;
+    } else {
+      const newRecord = this.lectureTimeRecordRepository.create({
+        lectureId,
+        userId,
+        playTime: 0,
+      });
+      const newLectureRecords =
+        await this.lectureTimeRecordRepository.save(newRecord);
+      return newLectureRecords;
+    }
+  }
+
+  async findAllLecturesByCourseId(userId: number, courseId: number) {
+    const course = await this.courseRepository.findOne({
+      where: {
+        courseId,
+      },
+      relations: [
+        'lectures',
+        'lectures.quizzes',
+        'lectures.quizzes.quizAnswers',
+        'lectures.quizzes.quizSubmits',
+        'lectures.lectureTimeRecords',
+      ],
+    });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    // 각 lecture의 모든 관련 데이터를 userId에 맞게 필터링
+    course.lectures.forEach((lecture) => {
+      // 각 퀴즈의 quizSubmits 필터링
+      lecture.quizzes.forEach((quiz) => {
+        quiz.quizSubmits = quiz.quizSubmits.filter((quizSubmit) => {
+          return quizSubmit.userId === userId;
+        });
+      });
+      // 각 lecture의 lectureTimeRecords 필터링
+      lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
+        (record) => {
+          return record.userId === userId;
+        },
+      );
+    });
+
+    return course;
   }
 }
