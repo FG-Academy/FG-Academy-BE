@@ -15,18 +15,17 @@ import {
 import { UsersService } from './users.service';
 import { UpdateLectureRecordDto } from './dto/update-lectureRecord.dto';
 import { Public } from '../auth/decorators/public.decorator';
-import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { UpdateUserDto } from '../admin/dto/update-user.dto';
 import { EmailDto } from './dto/email.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { AuthUser } from './decorators/user.decorator';
 import { Roles } from './decorators/role.decorator';
-import { UpdateCompletedDto } from './dto/update-completed.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // @Roles('admin')
+  @Roles('admin')
   @Get()
   async findPage(@Query() query) {
     if (query.page) {
@@ -61,17 +60,9 @@ export class UsersController {
     return result;
   }
 
-  @Patch(':userId')
-  async updateOneByUserId(
-    @Body() dto: UpdateUserDto,
-    @Param('userId') userId: number,
-  ) {
-    return await this.usersService.updateDB(dto, userId);
-  }
-
   @Delete('/profile')
-  async deleteUserInfo(@Req() req) {
-    const result = await this.usersService.deleteUserInfo(req.user.userId);
+  async deleteUserInfo(@AuthUser('userId') userId: number) {
+    const result = await this.usersService.deleteUserInfo(userId);
 
     return result;
   }
@@ -105,13 +96,12 @@ export class UsersController {
     await this.usersService.saveMinutes(dto.minutes, userId, dto.lectureId);
     return { message: 'Successfully saved playtime' };
   }
-  // 사용자가 한 강의의 수강이 끝나면 해당 API가 작동해서 수강 완료 여부를 입력함
-  // 강의 수강 완료 시에, 해당 API가 작동해서 강의 완료 여부를 판독할 수 있도록 해야함
+
   @Patch('/completed/:lectureId')
   async updateCompleted(
     @Param('lectureId') lectureId: number,
     // @Body() updateCompletedDto: UpdateCompletedDto,
-    @AuthUser('userId') userId,
+    @AuthUser('userId') userId: number,
   ) {
     await this.usersService.updateCompleted(userId, lectureId);
     return { message: 'Successfully updated completed status' };

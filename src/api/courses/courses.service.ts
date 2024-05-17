@@ -1,16 +1,8 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  // NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from 'src/entities/course.entity';
 import { Repository } from 'typeorm';
-import { CreateCourseDto } from './dto/create-course.dto';
 import { Lecture } from 'src/entities/lecture.entity';
-import { CreateLectureDto } from './dto/create-lecture.dto';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import moment from 'moment-timezone';
@@ -30,82 +22,25 @@ export class CoursesService {
     private readonly lectureTimeRecordRepository: Repository<LectureTimeRecord>,
   ) {}
 
-  async createCourse(createCourseDto: CreateCourseDto) {
-    const { thumbnailImage, ...courseData } = createCourseDto;
-
-    createCourseDto.thumbnailImage = thumbnailImage;
-
-    const newCourseData = this.courseRepository.create({
-      thumbnailImagePath: thumbnailImage.path,
-      ...courseData,
-    });
-
-    await this.courseRepository.save(newCourseData);
-
-    return { message: 'Success' };
-  }
-
   async findAll(): Promise<Course[]> {
-    return await this.courseRepository.find();
+    return await this.courseRepository.find({
+      where: { status: 'active' },
+    });
   }
 
   async findOne(courseId: number) {
-    return await this.courseRepository.findOne({ where: { courseId } });
+    return await this.courseRepository.findOne({
+      where: { courseId, status: 'active' },
+    });
   }
 
-  async createLecturesByCourseId(
-    courseId: number,
-    createLectureDtos: CreateLectureDto[],
-  ) {
-    const course = await this.courseRepository.findOne({
-      where: { courseId },
-    });
-    if (!course) {
-      throw new UnprocessableEntityException(
-        `Course with ID "${courseId}" not found`,
-      );
-    }
-
-    const newLectures = createLectureDtos.map((lecture) => {
-      return this.lectureRepository.create({
-        ...lecture,
-        courseId,
-      });
+  async getAllLecturesByCourseId(courseId: number): Promise<any> {
+    const course = await this.lectureRepository.find({
+      where: { courseId, status: 'active' },
+      order: { lectureNumber: 'ASC' },
     });
 
-    await this.lectureRepository.insert(newLectures);
-
-    return true;
-  }
-
-  async getAllLecturesByCourseId(
-    courseId: number,
-    userId: number,
-  ): Promise<any> {
-    const course = await this.courseRepository
-      .createQueryBuilder('course')
-      .leftJoinAndSelect('course.lectures', 'lecture')
-      .leftJoinAndSelect('lecture.quizzes', 'quiz')
-      .leftJoinAndSelect('quiz.quizAnswers', 'quizAnswer')
-      .leftJoinAndSelect(
-        'quiz.quizSubmits',
-        'quizSubmit',
-        'quizSubmit.userId = :userId',
-        { userId },
-      )
-      .leftJoinAndSelect(
-        'lecture.lectureTimeRecords',
-        'lectureTimeRecord',
-        'lectureTimeRecord.userId = :userId',
-        { userId },
-      )
-      .where('course.courseId = :courseId', { courseId })
-      .orderBy('lecture.lectureNumber', 'ASC')
-      .addOrderBy('quiz.quizId', 'ASC')
-      .addOrderBy('quizAnswer.id', 'ASC')
-      .getOne();
-
-    return course.lectures;
+    return course;
   }
 
   async getLecturesProgress(courseId: number, userId: number) {
@@ -197,7 +132,7 @@ export class CoursesService {
 
   async getEnrollmentData(courseId: number, userId: number) {
     const isCourse = await this.courseRepository.findOne({
-      where: { courseId },
+      where: { courseId, status: 'active' },
     });
 
     if (!isCourse) {
@@ -206,20 +141,22 @@ export class CoursesService {
 
     // 사용자가 수강신청을 했는지 확인
     const isExist = await this.enrollmentRepository.findOne({
-      where: { user: { userId }, course: { courseId } },
+      where: { user: { userId }, course: { courseId, status: 'active' } },
     });
+
     // 해당 코스의 전체 강의 개수
     const totalCourseLength = await this.lectureRepository.count({
       where: { courseId },
       select: { lectureId: true },
     });
+
     // 사용자가 해당 코스에서 수강완료한 강의 개수
     const completedLectures = await this.lectureTimeRecordRepository.find({
       where: {
         status: true,
         userId,
         lecture: {
-          course: { courseId }, // 특정 코스의 강의들 중에서 수강 완료한 강의를 찾는 조건 추가
+          course: { courseId, status: 'active' }, // 특정 코스의 강의들 중에서 수강 완료한 강의를 찾는 조건 추가
         },
       },
       relations: ['lecture', 'lecture.course'], // 필요한 relation 명시
@@ -269,6 +206,51 @@ export class CoursesService {
     }
   }
 
+  async findAllLecturesByCourseId(userId: number, courseId: number) {
+    const course = await this.courseRepository.findOne({
+      where: {
+        courseId,
+        status: 'active',
+        lectures: { status: 'active' },
+      },
+      relations: [
+        'lectures',
+        'lectures.quizzes',
+        'lectures.quizzes.quizAnswers',
+        'lectures.quizzes.quizSubmits',
+        'lectures.lectureTimeRecords',
+      ],
+      order: {
+        lectures: {
+          lectureNumber: 'ASC',
+          quizzes: { quizIndex: 'ASC', quizAnswers: { itemIndex: 'ASC' } },
+        },
+      },
+    });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    // 각 lecture의 모든 관련 데이터를 userId에 맞게 필터링
+    course.lectures.forEach((lecture) => {
+      // 각 퀴즈의 quizSubmits 필터링
+      lecture.quizzes.forEach((quiz) => {
+        quiz.quizSubmits = quiz.quizSubmits.filter((quizSubmit) => {
+          return quizSubmit.userId === userId;
+        });
+      });
+      // 각 lecture의 lectureTimeRecords 필터링
+      lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
+        (record) => {
+          return record.userId === userId;
+        },
+      );
+    });
+
+    return course;
+  }
+
   async getLectureRecords(lectureId: number, userId: number) {
     const lecture = await this.lectureRepository.findOne({
       where: { lectureId },
@@ -296,42 +278,5 @@ export class CoursesService {
         await this.lectureTimeRecordRepository.save(newRecord);
       return newLectureRecords;
     }
-  }
-
-  async findAllLecturesByCourseId(userId: number, courseId: number) {
-    const course = await this.courseRepository.findOne({
-      where: {
-        courseId,
-      },
-      relations: [
-        'lectures',
-        'lectures.quizzes',
-        'lectures.quizzes.quizAnswers',
-        'lectures.quizzes.quizSubmits',
-        'lectures.lectureTimeRecords',
-      ],
-    });
-
-    if (!course) {
-      throw new Error('Course not found');
-    }
-
-    // 각 lecture의 모든 관련 데이터를 userId에 맞게 필터링
-    course.lectures.forEach((lecture) => {
-      // 각 퀴즈의 quizSubmits 필터링
-      lecture.quizzes.forEach((quiz) => {
-        quiz.quizSubmits = quiz.quizSubmits.filter((quizSubmit) => {
-          return quizSubmit.userId === userId;
-        });
-      });
-      // 각 lecture의 lectureTimeRecords 필터링
-      lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
-        (record) => {
-          return record.userId === userId;
-        },
-      );
-    });
-
-    return course;
   }
 }

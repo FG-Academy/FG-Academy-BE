@@ -1,81 +1,43 @@
 import { AuthUser } from './../users/decorators/user.decorator';
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  // Request,
-  // Query,
-  //   UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { CoursesService } from './courses.service';
-import { CreateCourseDto } from './dto/create-course.dto';
-import { FormDataRequest, FileSystemStoredFile } from 'nestjs-form-data';
-import { CreateLectureDto } from './dto/create-lecture.dto';
 import { Public } from '../auth/decorators/public.decorator';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('courses')
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
-  //@Req() request: Request)  =>
-  // 나중에 해당 API를 보낸 사람이 관리자인지 아닌지 확인하는 Validation 필요하지 않을까
-
-  @Post()
-  @FormDataRequest({ storage: FileSystemStoredFile, autoDeleteFile: false })
-  create(@Body() createCourseDto: CreateCourseDto) {
-    return this.coursesService.createCourse(createCourseDto);
-  }
-
+  @ApiOperation({ summary: '[홈 화면, 강의 목록 화면] 모든 코스를 가져옴' })
   @Public()
   @Get()
   findAll() {
     return this.coursesService.findAll();
   }
 
+  @ApiOperation({ summary: '[코스 상세 화면] 코스 ID로 코스 정보 조회' })
   @Get(':courseId')
   findOne(@Param('courseId') courseId: number) {
     return this.coursesService.findOne(courseId);
   }
 
-  @Post(':courseId/lectures')
-  async createLecturesByCourseId(
-    @Param('courseId') courseId: number,
-    @Body() createLectureDtos: CreateLectureDto[],
-  ) {
-    await this.coursesService.createLecturesByCourseId(
-      courseId,
-      createLectureDtos,
-    );
-    return { message: 'Lectures created successfully' };
-  }
-
+  @ApiOperation({ summary: '[코스 상세 화면] 코스 ID로 lectures 조회' })
   @Get(':courseId/lectures')
-  async findAllLecturesByCourseId(
-    @Param('courseId') courseId: number,
-    @AuthUser() user,
-  ) {
-    const userId = user.userId;
-    const data = await this.coursesService.getAllLecturesByCourseId(
-      courseId,
-      userId,
-    );
+  async findAllLecturesByCourseId2(@Param('courseId') courseId: number) {
+    const data = await this.coursesService.getAllLecturesByCourseId(courseId);
     return data;
   }
 
-  // @Public()
+  @ApiOperation({ summary: 'progress 정보 가져오기' })
   @Get(':courseId/lectures/progress')
   getLecturesProgress(
     @Param('courseId') courseId: number,
-    // @Query('userId') userId: number,
-    @AuthUser() user,
+    @AuthUser('userId') userId: number,
   ) {
-    const userId = user.userId;
     return this.coursesService.getLecturesProgress(courseId, userId);
   }
 
-  // TODO: 유저의 레벨에 따라서 수강 신청을 막거나 허용하는 Validation이 필요함
   @Post(':courseId/enrollment')
   enrollCourse(@Param('courseId') courseId: number, @AuthUser() user) {
     const { userId, level } = user;
@@ -83,28 +45,29 @@ export class CoursesController {
     return this.coursesService.enrollCourse(courseId, userId, level);
   }
 
-  //! 사용자가 특정 코스에 참여했는지 여부를 알기 위해 동작하는 API
+  @ApiOperation({ summary: '[강의 상세 화면] 수강 신청 정보 가져오기' })
   @Get(':courseId/enrollment')
-  getEnrollmentData(@Param('courseId') courseId: number, @AuthUser() user) {
-    const userId = user.userId;
-
+  getEnrollmentData(
+    @Param('courseId') courseId: number,
+    @AuthUser('userId') userId: number,
+  ) {
     return this.coursesService.getEnrollmentData(courseId, userId);
   }
 
   @Get('myLectures/:courseId')
-  getLectures(@AuthUser() user, @Param('courseId') courseId: number) {
-    const userId = user.userId;
+  getLectures(
+    @AuthUser('userId') userId: number,
+    @Param('courseId') courseId: number,
+  ) {
     return this.coursesService.findAllLecturesByCourseId(userId, courseId);
   }
 
+  @ApiOperation({ summary: '[강의 수강 화면] lectureTimeRecord 가져오기' })
   @Get('lectures/:lectureId')
   getLectureRecords(
     @Param('lectureId') lectureId: number,
-    @AuthUser('userId') userId,
+    @AuthUser('userId') userId: number,
   ) {
     return this.coursesService.getLectureRecords(lectureId, userId);
   }
-
-  //TODO: 내 강의실에는 수강 신청한 모든 코스에 대한 수강 완료 강의와 그 전체 길이를 가져와야하는데, 그러면 쿼리가 너무 복잡해지지 않을까?
-  // 그냥 수강 완료하면 enrollment 테이블의 개수 하나를 +1 시켜주는 방식으로 하고 그 값을 가져오는건 어떠나? 너무 안정적이지 못한가?
 }

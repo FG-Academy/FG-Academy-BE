@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,11 +20,24 @@ async function bootstrap() {
       },
     }),
   );
-  // app.use((req, res, next) => new LoggerMiddleware().use(req, res, next));
+  const options = new DocumentBuilder()
+    .setTitle('Your API Title')
+    .setDescription('Your API description')
+    .setVersion('1.0')
+    .addServer('http://localhost:80/', 'Local environment')
+    .addServer('https://staging.yourapi.com/', 'Staging')
+    .addServer('https://production.yourapi.com/', 'Production')
+    .addTag('Your API Tag')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup('api-docs', app, document);
+
   app.enableCors({
     origin: true,
     credentials: true,
   });
+
   // app.useStaticAssets(join(__dirname, '..', 'public'));
   // app.useGlobalFilters(new GlobalExceptionFilter());
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
