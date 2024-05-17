@@ -55,7 +55,13 @@ export class DashboardService {
 
         const lastStudyLecture = await this.lectureTimeRecordRepository.findOne(
           {
-            where: { user: { userId }, lecture: { course: { courseId } } },
+            where: {
+              user: { userId },
+              lecture: {
+                status: 'active',
+                course: { status: 'active', courseId },
+              },
+            },
             relations: ['lecture'],
             order: { updatedAt: 'DESC' },
           },
