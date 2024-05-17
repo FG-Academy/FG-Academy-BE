@@ -45,7 +45,7 @@ export class AdminController {
     return this.adminService.findUserById(userId);
   }
 
-  @Patch(':userId')
+  @Patch('/users/:userId')
   async updateOneByUserId(
     @Body() dto: UpdateUserDto,
     @Param('userId') userId: number,

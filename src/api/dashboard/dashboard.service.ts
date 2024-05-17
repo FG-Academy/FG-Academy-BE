@@ -27,7 +27,7 @@ export class DashboardService {
 
   async findAll(userId: number) {
     const userEnrollments = await this.enrollmentRepository.find({
-      where: { user: { userId } },
+      where: { user: { userId }, course: { status: 'active' } },
       relations: ['course'],
     });
 

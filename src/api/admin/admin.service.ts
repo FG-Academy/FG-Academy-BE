@@ -157,7 +157,7 @@ export class AdminService {
       where: {
         courseId,
         status: In(['active', 'inactive']),
-        lectures: { status: 'active' },
+        // lectures: { status: 'active' },
       },
       relations: ['lectures'],
       order: {
@@ -166,6 +166,9 @@ export class AdminService {
         },
       },
     });
+    course.lectures = course.lectures.filter(
+      (lecture) => lecture.status === 'active',
+    );
 
     if (!course) {
       throw new Error('Course not found');
@@ -210,13 +213,17 @@ export class AdminService {
       where: {
         courseId,
         status: In(['active', 'inactive']),
-        lectures: { status: 'active' },
+        // lectures: { status: 'active' },
       },
       relations: ['lectures'],
     });
     if (!course) {
       throw new Error('Course not found');
     }
+
+    course.lectures = course.lectures.filter(
+      (lecture) => lecture.status === 'active',
+    );
 
     const existingLectureIds = course.lectures.map(
       (lecture) => lecture.lectureId,
@@ -278,13 +285,16 @@ export class AdminService {
         status: In(['active', 'inactive']),
         lectures: { status: 'active' },
       },
+      order: {
+        lectures: { quizzes: { quizSubmits: { createdAt: 'DESC' } } },
+      },
     });
 
     if (!courses.length) {
       return [];
     }
 
-    // 모든 코스를 순회하며 각 렉처의 모든 관련 데이터를 userId에 맞게 필터링
+    // 모든 코스를 순회하며 각 렉처의 모든 관련 데이터를 userId에 맞게 필터
     courses.forEach((course) => {
       course.lectures.forEach((lecture) => {
         // 각 퀴즈의 quizSubmits 필터링

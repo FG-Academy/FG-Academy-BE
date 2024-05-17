@@ -45,7 +45,7 @@ export class CoursesService {
 
   async getLecturesProgress(courseId: number, userId: number) {
     const lectures = await this.lectureRepository.find({
-      where: { course: { courseId } },
+      where: { course: { courseId }, status: 'active' },
       relations: ['lectureTimeRecords', 'quizzes.quizSubmits'],
     });
 
@@ -146,7 +146,7 @@ export class CoursesService {
 
     // 해당 코스의 전체 강의 개수
     const totalCourseLength = await this.lectureRepository.count({
-      where: { courseId },
+      where: { courseId, status: 'active' },
       select: { lectureId: true },
     });
 
@@ -156,6 +156,7 @@ export class CoursesService {
         status: true,
         userId,
         lecture: {
+          status: 'active',
           course: { courseId, status: 'active' }, // 특정 코스의 강의들 중에서 수강 완료한 강의를 찾는 조건 추가
         },
       },
@@ -164,6 +165,7 @@ export class CoursesService {
         updatedAt: 'DESC', // 가장 최근에 업데이트된 순서로 정렬
       },
     });
+    console.log(completedLectures);
 
     const firstLecture = await this.lectureRepository.findOneBy({
       courseId,
@@ -262,7 +264,7 @@ export class CoursesService {
     }
 
     const lectureRecords = await this.lectureTimeRecordRepository.findOneBy({
-      lecture: { lectureId },
+      lecture: { lectureId, status: 'active' },
       userId,
     });
 
