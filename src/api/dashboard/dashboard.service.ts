@@ -45,7 +45,10 @@ export class DashboardService {
           await this.lectureTimeRecordRepository.count({
             where: {
               user: { userId },
-              lecture: { course: { courseId } },
+              lecture: {
+                status: 'active',
+                course: { courseId, status: 'active' },
+              },
               status: true,
             },
           });
