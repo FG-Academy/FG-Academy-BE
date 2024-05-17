@@ -16,7 +16,7 @@ import { Course } from 'src/entities/course.entity';
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
-          host: 'smtp.naver.com',
+          host: 'smtp.gmail.com',
           port: 587,
           auth: {
             user: process.env.EMAILADDRESS,
