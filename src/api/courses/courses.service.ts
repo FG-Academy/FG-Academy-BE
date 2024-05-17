@@ -203,7 +203,7 @@ export class CoursesService {
         message: '수강 신청하기',
         totalCount: totalCourseLength,
         completedLectures: 0,
-        lastStudyLecture: null,
+        lastStudyLecture: firstLecture.lectureId,
       };
     }
   }

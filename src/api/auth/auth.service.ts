@@ -12,6 +12,9 @@ import { JwtPayload } from './interface/jwtPayload.interface';
 import { Request } from 'express';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Enrollment } from 'src/entities/enrollment.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +23,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
     private readonly httpService: HttpService,
+    @InjectRepository(Enrollment)
+    private readonly enrollmentRepository: Repository<Enrollment>,
   ) {}
 
   async create(signUpDto: SignUpDto): Promise<User> {
@@ -50,11 +55,23 @@ export class AuthService {
 
     await this.refreshTokenIdsStorage.insert(user.userId, refreshToken);
 
+    const enrollment = await this.enrollmentRepository.find({
+      where: {
+        user: { userId: user.userId },
+        course: { status: 'active' },
+      },
+      relations: ['course'],
+    });
+    const enrollmentIds = enrollment.map(
+      (enrollment) => enrollment.course.courseId,
+    );
+
     return {
       id: user.userId,
       email: user.email,
       name: user.name,
       level: user.level,
+      enrollmentIds,
       expiresIn: 10 * 60 * 60,
       accessToken,
       refreshToken,

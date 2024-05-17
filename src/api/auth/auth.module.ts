@@ -16,10 +16,11 @@ import { HttpModule } from '@nestjs/axios';
 import { APP_GUARD } from '@nestjs/core';
 import { JWTAuthGuard } from './guards/jwtAuth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { Enrollment } from 'src/entities/enrollment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Enrollment]),
     UsersModule,
     HttpModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),

@@ -16,6 +16,6 @@ export class DashboardController {
 
   @Get('/quizzes')
   getMyQuizList(@AuthUser('userId') userId: number) {
-    return this.dashboardService.findQuizList2(userId);
+    return this.dashboardService.findQuizList(userId);
   }
 }
