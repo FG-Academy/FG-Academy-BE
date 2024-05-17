@@ -52,6 +52,7 @@ export class DashboardService {
               status: true,
             },
           });
+        console.log(courseId);
 
         const lastStudyLecture = await this.lectureTimeRecordRepository.findOne(
           {
@@ -59,13 +60,28 @@ export class DashboardService {
               user: { userId },
               lecture: {
                 status: 'active',
-                course: { status: 'active', courseId },
+                course: { courseId, status: 'active' },
               },
             },
             relations: ['lecture'],
             order: { updatedAt: 'DESC' },
           },
         );
+        // const course = await this.courseRepository.findOne({
+        //   where: {
+        //     courseId,
+        //     status: 'active',
+        //     // lectures: { status: 'active' },
+        //   },
+        //   relations: ['lectures'],
+        //   order: { lectures: { lectureNumber: 'ASC' } },
+        // });
+        // console.log(course);
+        // if (course.lectures) {
+        //   course.lectures = course.lectures.filter(
+        //     (lecture) => lecture.status === 'active',
+        //   );
+        // }
 
         return {
           courseId,
@@ -74,7 +90,9 @@ export class DashboardService {
           thumbnailPath: enrollment.course.thumbnailImagePath,
           totalCourseLength: totalCourseLength,
           completedLectures: completedLecturesLength,
-          lastStudyLectureId: lastStudyLecture.lectureId,
+          lastStudyLectureId: lastStudyLecture ? lastStudyLecture.lectureId : 1,
+          // lastStudyLectureId:
+          //   course.lectures.length > 0 ? course.lectures[0].lectureId : 1,
         };
       }),
     );

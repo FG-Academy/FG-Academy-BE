@@ -165,9 +165,9 @@ export class CoursesService {
         updatedAt: 'DESC', // 가장 최근에 업데이트된 순서로 정렬
       },
     });
-    console.log(completedLectures);
 
     const firstLecture = await this.lectureRepository.findOneBy({
+      status: 'active',
       courseId,
       lectureNumber: 1,
     });
@@ -175,15 +175,16 @@ export class CoursesService {
     // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
     const lastStudyLecture = completedLectures[0];
 
-    if (totalCourseLength === completedLectures.length) {
+    if (
+      totalCourseLength !== 0 &&
+      totalCourseLength === completedLectures.length
+    ) {
       return {
         isTaking: null,
         message: '수강완료',
         totalCount: totalCourseLength,
         completedLectures: completedLectures.length,
-        lastStudyLecture: lastStudyLecture?.lectureId
-          ? lastStudyLecture.lectureId
-          : null,
+        lastStudyLecture: lastStudyLecture ? lastStudyLecture.lectureId : null,
       };
     }
     // 수강신청 이력이 남아있으면 이어듣기, 아니면 수강 신청하기
@@ -193,7 +194,7 @@ export class CoursesService {
         message: '이어듣기',
         totalCount: totalCourseLength,
         completedLectures: completedLectures.length,
-        lastStudyLecture: lastStudyLecture?.lectureId
+        lastStudyLecture: lastStudyLecture
           ? lastStudyLecture.lectureId
           : firstLecture.lectureId,
       };
