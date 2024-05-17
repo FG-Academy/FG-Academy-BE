@@ -1,36 +1,22 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { CreateQuizDto } from './dto/create-quiz.dto';
 import { QuizzesService } from './quizzes.service';
 import { CreateQuizAnswerDto } from './dto/create-quizAnswer.dto';
 import { AuthUser } from '../users/decorators/user.decorator';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('quizzes')
 export class QuizzesController {
   constructor(private readonly quizzesService: QuizzesService) {}
 
-  @Post()
-  async createQuizzes(@Body() createQuizDtos: CreateQuizDto[]) {
-    await this.quizzesService.createQuizzes(createQuizDtos);
-    return { message: 'Quizzes created successfully' };
-  }
-
-  @Get(':courseId')
-  findAll(
-    @Param('courseId') courseId: number,
-    @AuthUser() user,
-    // @Query('userId') userId: number,
-  ) {
-    const userId = user.userId;
-    return this.quizzesService.findAllByCourseId(courseId, userId);
-  }
-
-  @Get(':courseId/:lectureId')
+  @ApiOperation({
+    summary: '[관리자 화면 | 강의 수강 화면] 강의 별 퀴즈 가져오기',
+  })
+  @Get('lectures/:lectureId')
   findGetQuiz(
-    @Param('courseId') courseId: number,
     @Param('lectureId') lectureId: number,
-    @AuthUser('userId') userId,
+    @AuthUser('userId') userId: number,
   ) {
-    return this.quizzesService.findAllLectureQuiz(courseId, lectureId, userId);
+    return this.quizzesService.findAllLectureQuiz(lectureId, userId);
   }
 
   @Post('answer')

@@ -1,19 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, FindOneOptions, Repository } from 'typeorm';
+import { EntityManager, FindOneOptions, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from 'src/entities/user.entity';
 import { SignUpDto } from '../auth/dto/signUp.dto';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
-import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { UpdateUserDto } from '../admin/dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { v4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -29,28 +27,20 @@ export class UsersService {
     private usersRepository: Repository<User>, // UserRepository 주입
     @InjectRepository(LectureTimeRecord)
     private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
-    private dataSource: DataSource,
     private readonly mailerService: MailerService,
-    @InjectRepository(Enrollment)
-    private enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
     private entityManager: EntityManager,
   ) {}
 
   async findAll() {
-    const [users, count] = await this.usersRepository.findAndCount({
-      relations: ['enrollments'],
-    });
+    const users = await this.usersRepository.find();
     const usersForResponse = users.map((user) => instanceToPlain(user));
-    return {
-      users: usersForResponse,
-      count,
-    };
+    return usersForResponse;
   }
 
   async findByName(name: string) {
-    const users = await this.usersRepository.find({
+    const [users, count] = await this.usersRepository.findAndCount({
       where: {
         name,
       },
@@ -59,7 +49,6 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const { count } = await this.findAll();
     return {
       users: instanceToPlain(users),
       count,
@@ -70,12 +59,11 @@ export class UsersService {
     const take = 10; // 한 페이지 당 아이템 수
     const skip = (page - 1) * take; // 건너뛸 아이템 수 계산
 
-    const users = await this.usersRepository.find({
+    const [users, count] = await this.usersRepository.findAndCount({
       take: take,
       skip: skip,
     });
 
-    const { count } = await this.findAll();
     return {
       users: instanceToPlain(users),
       count,
@@ -220,7 +208,18 @@ export class UsersService {
       ${verficationCode} 
       
       입니다.`,
-      html: `<p>인증 코드: ${verficationCode} </p>`,
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; background-color: #f9f9f9;">
+        <h2 style="text-align: center; color: #333;">꽃동산 아카데미 비밀번호 재설정 인증코드</h2>
+        <p style="font-size: 16px; color: #555;">안녕하세요,</p>
+        <p style="font-size: 16px; color: #555;">꽃동산 아카데미 이메일 인증코드는 다음과 같습니다:</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <span style="display: inline-block; padding: 10px 20px; font-size: 18px; color: #fff; background-color: #007bff; border-radius: 5px;">${verficationCode}</span>
+        </div>
+        <p style="font-size: 16px; color: #555;">이 코드를 사용하여 비밀번호를 재설정하세요.</p>
+        <p style="font-size: 16px; color: #555;">감사합니다.</p>
+      </div>
+    `,
     });
 
     return verficationCode;

@@ -15,6 +15,7 @@ import { DashboardModule } from './api/dashboard/dashboard.module';
 import { AdminModule } from './api/admin/admin.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { PostsModule } from './api/posts/posts.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { join } from 'path';
     }),
     CoursesModule,
     QuizzesModule,
+    PostsModule,
     NestjsFormDataModule.config({
       fileSystemStoragePath: join(__dirname, '..', 'public'),
       storage: FileSystemStoredFile,

@@ -34,33 +34,38 @@ export class DashboardService {
     const courseDetail = await Promise.all(
       userEnrollments.map(async (enrollment) => {
         const courseId = enrollment.course.courseId;
+
         // 해당 코스에 속한 강의 총 개수
         const totalCourseLength = await this.lectureRepository.count({
-          where: { course: { courseId } },
-        });
-        // 사용자가 수강 완료한 강의 개수
-        const completedLectures = await this.lectureTimeRecordRepository.count({
-          where: {
-            user: { userId },
-            lecture: { course: { courseId } },
-            status: true,
-          },
+          where: { course: { courseId, status: 'active' } },
         });
 
-        const lastStudyLecture = await this.lectureTimeRecordRepository.find({
-          where: { user: { userId }, lecture: { course: { courseId } } },
-          relations: ['lecture'],
-          order: { updatedAt: 'DESC' },
-        });
+        // 사용자가 수강 완료한 강의 개수
+        const completedLecturesLength =
+          await this.lectureTimeRecordRepository.count({
+            where: {
+              user: { userId },
+              lecture: { course: { courseId } },
+              status: true,
+            },
+          });
+
+        const lastStudyLecture = await this.lectureTimeRecordRepository.findOne(
+          {
+            where: { user: { userId }, lecture: { course: { courseId } } },
+            relations: ['lecture'],
+            order: { updatedAt: 'DESC' },
+          },
+        );
 
         return {
-          courseId: courseId,
+          courseId,
           title: enrollment.course.title,
           curriculum: enrollment.course.curriculum,
           thumbnailPath: enrollment.course.thumbnailImagePath,
           totalCourseLength: totalCourseLength,
-          completedLectures: completedLectures,
-          lastStudyLectureId: lastStudyLecture[0]?.lectureId || 1,
+          completedLectures: completedLecturesLength,
+          lastStudyLectureId: lastStudyLecture.lectureId,
         };
       }),
     );
@@ -81,6 +86,7 @@ export class DashboardService {
       .leftJoinAndSelect('lecture.course', 'course') // 강의가 속한 코스를 추가로 불러옵니다.
       .where('quizSubmit.userId = :userId', { userId })
       .getMany();
+    console.log(submittedQuizzes);
 
     // quizId를 기준으로 제출된 퀴즈들을 그룹화합니다.
     const quizMap = new Map();
@@ -136,5 +142,77 @@ export class DashboardService {
       ...quiz,
       submittedAnswersContents: [...new Set(quiz.submittedAnswersContents)], // 중복 제거
     }));
+  }
+
+  //   {
+  //     "quizId": 8,
+  //     "question": "\"잊고 서있는 사람이 되고 싶었어\" 다음에 나올 단어는?",
+  //     "submittedAnswer": [
+  //         0
+  //     ],
+  //     "submittedAnswersContents": [
+  //         "답안 없음"
+  //     ],
+  //     "isAnswer": false,
+  //     "lectureTitle": "동그라미",
+  //     "courseTitle": "코스 11",
+  //     "correctAnswers": []
+  // }
+
+  async findQuizList2(userId: number): Promise<any[]> {
+    // 사용자가 제출한 모든 퀴즈 정보와 그 답안들을 조회합니다.
+    const submittedQuizzes = await this.quizSubmitRepository.find({
+      where: {
+        userId,
+        quiz: { lecture: { status: 'active', course: { status: 'active' } } },
+      },
+      relations: [
+        'quiz',
+        'quiz.quizAnswers',
+        'quiz.lecture',
+        'quiz.lecture.course',
+      ],
+      order: {
+        quiz: {
+          quizAnswers: { itemIndex: 'ASC' },
+          lecture: { lectureNumber: 'ASC' },
+        },
+      },
+    });
+
+    const quizMap = new Map();
+
+    submittedQuizzes.forEach((sq) => {
+      if (sq.multipleAnswer === 1) {
+        const existingQuiz = quizMap.get(sq.quiz.quizId);
+        if (
+          !existingQuiz ||
+          new Date(sq.updatedAt) > new Date(existingQuiz.updatedAt)
+        ) {
+          quizMap.set(sq.quiz.quizId, sq);
+        }
+      } else {
+        quizMap.set(`${sq.quiz.quizId}-${sq.id}`, sq);
+      }
+    });
+
+    const filteredQuizzes = Array.from(quizMap.values());
+
+    // 퀴즈 정보를 원하는 형식으로 변환합니다.
+    const quizList = filteredQuizzes.map((sq) => {
+      return {
+        quizId: sq.quiz.quizId,
+        question: sq.quiz.question,
+        answer: sq.answer,
+        multipleAnswer: sq.multipleAnswer,
+        isAnswer: sq.status,
+        lectureTitle: sq.quiz.lecture.title,
+        courseTitle: sq.quiz.lecture.course.title,
+        feedback: sq.feedbackComment,
+        quizAnswers: sq.quiz.quizAnswers,
+      };
+    });
+
+    return quizList;
   }
 }

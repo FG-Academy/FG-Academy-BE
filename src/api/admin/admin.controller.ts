@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -22,22 +21,42 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { DeleteCourseDto } from './dto/delete-course.dto';
 import { AuthUser } from '../users/decorators/user.decorator';
 import { FeedbackDto } from './dto/feedback.dto';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UpdateUserDto } from './dto/update-user.dto';
 
+@ApiTags('admin')
 @Roles('admin')
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  /**
+   * 유저 정보
+   */
+  @ApiOperation({ summary: '[관리자 화면-유저] 전체 유저 가져오기' })
   @Get('/users')
   findAllUsers() {
     return this.adminService.findAllUsers();
   }
 
+  @ApiOperation({ summary: '[관리자 화면-유저] 한 유저 정보 가져오기' })
   @Get('/users/:userId')
   findUserById(@Param('userId') userId: number) {
     return this.adminService.findUserById(userId);
   }
 
+  @Patch(':userId')
+  async updateOneByUserId(
+    @Body() dto: UpdateUserDto,
+    @Param('userId') userId: number,
+  ) {
+    return await this.adminService.updateDB(dto, userId);
+  }
+
+  /**
+   * 강의 정보
+   */
+  @ApiOperation({ summary: '[관리자 화면-강의] 전체 강의 가져오기' })
   @Get('/courses')
   findAll() {
     return this.adminService.findAll();
@@ -57,6 +76,7 @@ export class AdminController {
     return { message: 'Courses deleted successfully' };
   }
 
+  @ApiOperation({ summary: '[관리자 화면-강의] 한 강의 정보 가져오기' })
   @Get('/courses/:courseId')
   findOne(@Param('courseId') courseId: number) {
     return this.adminService.findOne(courseId);
@@ -83,24 +103,28 @@ export class AdminController {
     return { message: 'Course updated successfully' };
   }
 
+  @ApiOperation({
+    summary: '[관리자 화면-퀴즈] 유저 별 코스 정보 가져오기',
+  })
+  @Get('lectures/:userId')
+  getAllLectures(@Param('userId') userId: number) {
+    return this.adminService.getAllLectures(userId);
+  }
+
   @Get('/curriculum')
   async findAllCurriculums() {
     const result = await this.adminService.findAllCurriculums();
     return { data: result };
   }
-  // 가드를 고려하여 Param이 없는 라우트 먼저 선언해야함
 
+  /**
+   * 퀴즈 정보
+   */
+  @ApiOperation({ summary: '[관리자 화면-퀴즈] 모든 제출된 퀴즈 가져오기' })
   @Get('quizzes')
   async findQuizData() {
     return await this.adminService.findQuizAll();
   }
-
-  @Get('quizzes2')
-  async findQuizData2() {
-    return await this.adminService.findQuizAll2();
-  }
-
-  // @Get('quizzes/grade/')
 
   @Post('quizzes/feedback/:userId/:quizId')
   async feedbackDescriptiveQuiz(
@@ -108,7 +132,6 @@ export class AdminController {
     @Param('quizId') quizId: number,
     @Body() feedbackDescriptiveQuizDto: FeedbackDescriptiveQuiz,
   ) {
-    // console.log(feedbackDescriptiveQuizDto);
     return await this.adminService.feedbackQuiz(
       userId,
       quizId,
@@ -116,22 +139,9 @@ export class AdminController {
     );
   }
 
-  @Get(':userId')
-  async findOneByUserId(@Param('userId') userId: number) {
-    return await this.adminService.findOneByUserId({ where: { userId } });
-  }
-
-  @Get('/quizzes2/:userId')
-  getMyQuizList(@Param('userId') userId: number, @Query('type') type: string) {
-    const queryQuizType = type;
-    return this.adminService.findMultipleQuizList(userId, queryQuizType);
-  }
-
-  @Get('myLectures/:userId')
-  getAllLectures(@Param('userId') userId: number) {
-    return this.adminService.getAllLectures(userId);
-  }
-
+  @ApiOperation({
+    summary: '[관리자 화면-퀴즈] 유저가 제출한 주관식 퀴즈 가져오기',
+  })
   @Get('quizzes/descriptive/:userId/:quizId')
   getDescriptiveQuiz(
     @Param('userId') userId: number,
@@ -140,13 +150,12 @@ export class AdminController {
     return this.adminService.getDescriptiveQuiz(userId, quizId);
   }
 
+  @ApiOperation({
+    summary: '[관리자 화면-퀴즈] 주관식 퀴즈 채점 화면',
+  })
   @Get('/quizzes/:userId')
-  getSubmittedQuizByUserId(
-    @Param('userId') userId: number,
-    @Query('type') type: string,
-  ) {
-    const queryQuizType = type;
-    return this.adminService.getSubmittedQuizByUserId(userId, queryQuizType);
+  getSubmittedQuizByUserId(@Param('userId') userId: number) {
+    return this.adminService.getSubmittedQuizByUserId(userId);
   }
 
   @Post('/quizzes/register/:lectureId')
@@ -157,13 +166,12 @@ export class AdminController {
     return this.adminService.createNewQuiz(lectureId, createQuizDto);
   }
 
-  @Patch('/quizzes/edit/:lectureId/:quizId')
+  @Patch('/quizzes/edit/:quizId')
   patchQuizData(
-    @Param('lectureId') lectureId: number,
     @Param('quizId') quizId: number,
     @Body() updateQuizDto: CreateQuizDto,
   ) {
-    return this.adminService.updateQuizData(lectureId, quizId, updateQuizDto);
+    return this.adminService.updateQuizData(quizId, updateQuizDto);
   }
 
   @Delete('/quizzes/delete/:quizId')
@@ -173,8 +181,8 @@ export class AdminController {
 
   @Patch('quizzes/:quizId/feedback')
   async updateQuizAnswer(
-    @Param('quizId') quizId,
-    @AuthUser('userId') userId,
+    @Param('quizId') quizId: number,
+    @AuthUser('userId') userId: number,
     @Body() dto: FeedbackDto,
   ) {
     await this.adminService.feedbackToUserAnswer(quizId, userId, dto);
