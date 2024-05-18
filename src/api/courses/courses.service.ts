@@ -153,7 +153,7 @@ export class CoursesService {
     // 사용자가 해당 코스에서 수강완료한 강의 개수
     const completedLectures = await this.lectureTimeRecordRepository.find({
       where: {
-        status: true,
+        // status: true,
         userId,
         lecture: {
           status: 'active',
@@ -162,9 +162,10 @@ export class CoursesService {
       },
       relations: ['lecture', 'lecture.course'], // 필요한 relation 명시
       order: {
-        updatedAt: 'DESC', // 가장 최근에 업데이트된 순서로 정렬
+        lecture: { lectureNumber: 'DESC' },
       },
     });
+    // console.log(completedLectures);
 
     const firstLecture = await this.lectureRepository.findOneBy({
       status: 'active',
@@ -173,30 +174,39 @@ export class CoursesService {
     });
 
     // 사용자가 해당 코스에서 가장 마지막으로(최근에) 수강완료한 강의
+    const completedLecture = completedLectures.filter(
+      (cl) => cl.status === true,
+    );
+    // console.log(completedLecture, 'com');
+
     const lastStudyLecture = completedLectures[0];
+    // console.log(lastStudyLecture, 'last');
 
     if (
       totalCourseLength !== 0 &&
-      totalCourseLength === completedLectures.length
+      totalCourseLength === completedLecture.length
     ) {
       return {
         isTaking: null,
         message: '수강완료',
         totalCount: totalCourseLength,
-        completedLectures: completedLectures.length,
+        completedLectures: completedLecture.length,
         lastStudyLecture: lastStudyLecture ? lastStudyLecture.lectureId : null,
       };
     }
     // 수강신청 이력이 남아있으면 이어듣기, 아니면 수강 신청하기
     if (isExist) {
+      // console.log('isex', lastStudyLecture, firstLecture);
       return {
         isTaking: true,
         message: '이어듣기',
         totalCount: totalCourseLength,
-        completedLectures: completedLectures.length,
+        completedLectures: completedLecture.length,
         lastStudyLecture: lastStudyLecture
           ? lastStudyLecture.lectureId
-          : firstLecture.lectureId,
+          : firstLecture
+            ? firstLecture.lectureId
+            : null,
       };
     } else {
       return {
@@ -204,7 +214,7 @@ export class CoursesService {
         message: '수강 신청하기',
         totalCount: totalCourseLength,
         completedLectures: 0,
-        lastStudyLecture: firstLecture.lectureId,
+        lastStudyLecture: firstLecture ? firstLecture.lectureId : null,
       };
     }
   }

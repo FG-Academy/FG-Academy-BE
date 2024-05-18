@@ -41,47 +41,26 @@ export class DashboardService {
         });
 
         // 사용자가 수강 완료한 강의 개수
-        const completedLecturesLength =
-          await this.lectureTimeRecordRepository.count({
-            where: {
-              user: { userId },
-              lecture: {
-                status: 'active',
-                course: { courseId, status: 'active' },
-              },
-              status: true,
+        const lectureTimeRecord = await this.lectureTimeRecordRepository.find({
+          where: {
+            user: { userId },
+            lecture: {
+              status: 'active',
+              course: { courseId, status: 'active' },
             },
-          });
-        console.log(courseId);
-
-        const lastStudyLecture = await this.lectureTimeRecordRepository.findOne(
-          {
-            where: {
-              user: { userId },
-              lecture: {
-                status: 'active',
-                course: { courseId, status: 'active' },
-              },
-            },
-            relations: ['lecture'],
-            order: { updatedAt: 'DESC' },
+            // status: true,
           },
+          order: { updatedAt: 'DESC' },
+        });
+        const completedLectures = lectureTimeRecord.filter(
+          (ltp) => ltp.status === true,
         );
-        // const course = await this.courseRepository.findOne({
-        //   where: {
-        //     courseId,
-        //     status: 'active',
-        //     // lectures: { status: 'active' },
-        //   },
-        //   relations: ['lectures'],
-        //   order: { lectures: { lectureNumber: 'ASC' } },
-        // });
-        // console.log(course);
-        // if (course.lectures) {
-        //   course.lectures = course.lectures.filter(
-        //     (lecture) => lecture.status === 'active',
-        //   );
-        // }
+
+        const firstLecture = await this.lectureRepository.findOneBy({
+          status: 'active',
+          courseId,
+          lectureNumber: 1,
+        });
 
         return {
           courseId,
@@ -89,10 +68,13 @@ export class DashboardService {
           curriculum: enrollment.course.curriculum,
           thumbnailPath: enrollment.course.thumbnailImagePath,
           totalCourseLength: totalCourseLength,
-          completedLectures: completedLecturesLength,
-          lastStudyLectureId: lastStudyLecture ? lastStudyLecture.lectureId : 1,
-          // lastStudyLectureId:
-          //   course.lectures.length > 0 ? course.lectures[0].lectureId : 1,
+          completedLectures: completedLectures.length,
+          lastStudyLectureId:
+            lectureTimeRecord.length > 0
+              ? lectureTimeRecord[0].lectureId
+              : firstLecture
+                ? firstLecture.lectureId
+                : null,
         };
       }),
     );
