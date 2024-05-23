@@ -50,7 +50,9 @@ export class QuizSubmit {
   @JoinColumn({ name: 'quizId' })
   quiz: Quiz;
 
-  @ManyToOne(() => User, (user) => user.quizSubmits)
+  @ManyToOne(() => User, (user) => user.quizSubmits, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

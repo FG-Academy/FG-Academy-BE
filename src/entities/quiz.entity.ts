@@ -37,7 +37,9 @@ export class Quiz {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Lecture, (lecture) => lecture.quizzes)
+  @ManyToOne(() => Lecture, (lecture) => lecture.quizzes, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'lectureId' })
   lecture: Lecture;
 

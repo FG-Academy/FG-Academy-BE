@@ -4,6 +4,7 @@ import {
   Get,
   Header,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -32,6 +33,15 @@ export class AuthController {
   @Post('sign-up')
   async signUp(@Body() signUpDto: SignUpDto) {
     return this.authService.create(signUpDto);
+  }
+
+  @Public()
+  @Get('sign-up/emailCheck')
+  async findEmailExist(@Query('email') email: string) {
+    const result = await this.authService.verifyAndSendEmail(email);
+    if (!result) return false;
+    console.log(result);
+    return { result };
   }
 
   // @UseGuards(LocalAuthGuard)

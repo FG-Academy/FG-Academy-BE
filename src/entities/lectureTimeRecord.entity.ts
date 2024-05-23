@@ -36,7 +36,9 @@ export class LectureTimeRecord {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Lecture, (lecture) => lecture.lectureTimeRecords)
+  @ManyToOne(() => Lecture, (lecture) => lecture.lectureTimeRecords, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'lectureId' })
   lecture: Lecture;
 

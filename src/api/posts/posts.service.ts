@@ -15,7 +15,7 @@ export class PostsService {
   async findPosts(page: number) {
     const itemsPerPage = 10;
     const [posts, total] = await this.announcementRepository.findAndCount({
-      where: { courseId: null, status: 'active' },
+      where: { courseId: null },
       skip: (page - 1) * itemsPerPage,
       take: itemsPerPage,
       order: { createdAt: 'DESC' },
@@ -31,7 +31,7 @@ export class PostsService {
 
   async findOnePost(announcementId: number) {
     const post = await this.announcementRepository.findOne({
-      where: { announcementId, status: 'active', courseId: null },
+      where: { announcementId, courseId: null },
     });
 
     return post;
@@ -60,9 +60,8 @@ export class PostsService {
   }
 
   async deletePosts(announcementIds: number[]): Promise<void> {
-    await this.announcementRepository.update(
-      { announcementId: In(announcementIds) },
-      { status: 'deleted' },
-    );
+    await this.announcementRepository.delete({
+      announcementId: In(announcementIds),
+    });
   }
 }

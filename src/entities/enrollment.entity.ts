@@ -35,11 +35,15 @@ export class Enrollment {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Course, (course) => course.enrollments)
+  @ManyToOne(() => Course, (course) => course.enrollments, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'courseId' })
   course: Course;
 
-  @ManyToOne(() => User, (user) => user.enrollments)
+  @ManyToOne(() => User, (user) => user.enrollments, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

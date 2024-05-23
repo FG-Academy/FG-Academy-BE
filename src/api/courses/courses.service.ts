@@ -25,18 +25,19 @@ export class CoursesService {
   async findAll(): Promise<Course[]> {
     return await this.courseRepository.find({
       where: { status: 'active' },
+      order: { curriculum: 'ASC', title: 'ASC' },
     });
   }
 
   async findOne(courseId: number) {
     return await this.courseRepository.findOne({
-      where: { courseId, status: 'active' },
+      where: { courseId },
     });
   }
 
   async getAllLecturesByCourseId(courseId: number): Promise<any> {
     const course = await this.lectureRepository.find({
-      where: { courseId, status: 'active' },
+      where: { courseId },
       order: { lectureNumber: 'ASC' },
     });
 
@@ -45,7 +46,7 @@ export class CoursesService {
 
   async getLecturesProgress(courseId: number, userId: number) {
     const lectures = await this.lectureRepository.find({
-      where: { course: { courseId }, status: 'active' },
+      where: { course: { courseId } },
       relations: ['lectureTimeRecords', 'quizzes.quizSubmits'],
     });
 
@@ -58,7 +59,6 @@ export class CoursesService {
         lectureId: lecture.lectureId,
         lectureNumber: lecture.lectureNumber,
         completed: progress ? progress.status : false,
-        // quizCompleted:
         progress: progress ? progress.playTime : 0,
       };
     });
@@ -70,7 +70,6 @@ export class CoursesService {
     return {
       lectureProgresses,
       completedCount,
-      // progressPercentage: completedCount > 0 ? (completedCount / lectures.length) * 100 : 0,
     };
   }
 
@@ -132,7 +131,7 @@ export class CoursesService {
 
   async getEnrollmentData(courseId: number, userId: number) {
     const isCourse = await this.courseRepository.findOne({
-      where: { courseId, status: 'active' },
+      where: { courseId },
     });
 
     if (!isCourse) {
@@ -141,12 +140,12 @@ export class CoursesService {
 
     // 사용자가 수강신청을 했는지 확인
     const isExist = await this.enrollmentRepository.findOne({
-      where: { user: { userId }, course: { courseId, status: 'active' } },
+      where: { user: { userId }, course: { courseId } },
     });
 
     // 해당 코스의 전체 강의 개수
     const totalCourseLength = await this.lectureRepository.count({
-      where: { courseId, status: 'active' },
+      where: { courseId },
       select: { lectureId: true },
     });
 
@@ -156,8 +155,7 @@ export class CoursesService {
         // status: true,
         userId,
         lecture: {
-          status: 'active',
-          course: { courseId, status: 'active' }, // 특정 코스의 강의들 중에서 수강 완료한 강의를 찾는 조건 추가
+          course: { courseId }, // 특정 코스의 강의들 중에서 수강 완료한 강의를 찾는 조건 추가
         },
       },
       relations: ['lecture', 'lecture.course'], // 필요한 relation 명시
@@ -165,10 +163,8 @@ export class CoursesService {
         lecture: { lectureNumber: 'DESC' },
       },
     });
-    // console.log(completedLectures);
 
     const firstLecture = await this.lectureRepository.findOneBy({
-      status: 'active',
       courseId,
       lectureNumber: 1,
     });
@@ -177,10 +173,8 @@ export class CoursesService {
     const completedLecture = completedLectures.filter(
       (cl) => cl.status === true,
     );
-    // console.log(completedLecture, 'com');
 
     const lastStudyLecture = completedLectures[0];
-    // console.log(lastStudyLecture, 'last');
 
     if (
       totalCourseLength !== 0 &&
@@ -196,7 +190,6 @@ export class CoursesService {
     }
     // 수강신청 이력이 남아있으면 이어듣기, 아니면 수강 신청하기
     if (isExist) {
-      // console.log('isex', lastStudyLecture, firstLecture);
       return {
         isTaking: true,
         message: '이어듣기',
@@ -223,8 +216,6 @@ export class CoursesService {
     const course = await this.courseRepository.findOne({
       where: {
         courseId,
-        status: 'active',
-        lectures: { status: 'active' },
       },
       relations: [
         'lectures',
@@ -275,7 +266,7 @@ export class CoursesService {
     }
 
     const lectureRecords = await this.lectureTimeRecordRepository.findOneBy({
-      lecture: { lectureId, status: 'active' },
+      lecture: { lectureId },
       userId,
     });
 

@@ -10,9 +10,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from 'src/entities/course.entity';
 import { Lecture } from 'src/entities/lecture.entity';
 import { LectureDto, UpdateCourseDto } from './dto/update-course.dto';
-import { Announcement } from 'src/entities/announcement.entity';
-import { Enrollment } from 'src/entities/enrollment.entity';
-import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import { Quiz } from 'src/entities/quiz.entity';
 import { QuizAnswer } from 'src/entities/quizAnswer.entity';
 import { QuizSubmit } from 'src/entities/quizSubmit.entity';
@@ -25,14 +22,13 @@ import { FeedbackDescriptiveQuiz } from './dto/feedbackDescriptiveQuiz.dto';
 import { CreateQuizDto } from './dto/create-new-quiz.dto';
 import { FeedbackDto } from './dto/feedback.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { departments, positions } from './type/type';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>, // UserRepository 주입
-    @InjectRepository(LectureTimeRecord)
-    private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
     private dataSource: DataSource,
     @InjectRepository(Quiz)
     private quizRepository: Repository<Quiz>,
@@ -44,10 +40,6 @@ export class AdminService {
     private courseRepository: Repository<Course>,
     @InjectRepository(Lecture)
     private lectureRepository: Repository<Lecture>,
-    @InjectRepository(Announcement)
-    private announcementRepository: Repository<Announcement>,
-    @InjectRepository(Enrollment)
-    private enrollmentRepository: Repository<Enrollment>,
   ) {}
 
   /** 유저 정보 */
@@ -62,16 +54,139 @@ export class AdminService {
       where: {
         userId,
       },
-      select: {
+      relations: [
+        'enrollments',
+        'enrollments.course',
+        'enrollments.course.lectures',
+        'enrollments.course.lectures.lectureTimeRecords',
+        'enrollments.course.lectures.quizzes',
+        'enrollments.course.lectures.quizzes.quizSubmits',
+        'enrollments.course.lectures.quizzes.quizAnswers',
+      ],
+      order: {
         enrollments: {
-          id: true,
-          completedNumber: true,
-          course: { courseId: true, title: true },
+          course: {
+            lectures: {
+              lectureNumber: 'ASC',
+              quizzes: { quizIndex: 'ASC', quizAnswers: { itemIndex: 'ASC' } },
+            },
+          },
         },
       },
-      relations: ['enrollments', 'enrollments.course'],
     });
-    return instanceToPlain(user);
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    // 모든 수강 신청을 포함하도록 수정
+    const filteredEnrollments = user.enrollments;
+
+    const mappedData = {
+      ...user,
+      password: null,
+      refreshToken: null,
+      enrollments: filteredEnrollments.map((enrollment) => {
+        const lectures = enrollment.course.lectures || [];
+        let totalQuizCount = 0;
+        let userSubmittedQuizCount = 0;
+        let userCorrectQuizCount = 0;
+        let completedLecturesCount = 0;
+
+        const mappedLectures = lectures.map((lecture) => {
+          let lectureQuizTotalCount = 0;
+          let lectureCorrectQuizCount = 0;
+
+          const quizzes = lecture.quizzes.map((quiz) => {
+            // console.log(quiz);
+            const userSubmits = quiz.quizSubmits.filter(
+              (submit) => submit.userId === userId,
+            );
+
+            let answerType = '미채점';
+            let lastSubmit;
+            if (userSubmits.length > 0) {
+              lastSubmit = userSubmits.reduce((latest, current) =>
+                new Date(latest.createdAt) > new Date(current.createdAt)
+                  ? latest
+                  : current,
+              );
+              answerType =
+                lastSubmit.status === 1
+                  ? '정답'
+                  : lastSubmit.status === 0
+                    ? '미채점'
+                    : '오답';
+            }
+
+            const correctSubmits = userSubmits.filter(
+              (submit) => submit.status === 1,
+            );
+
+            lectureQuizTotalCount++;
+            if (userSubmits.length > 0) {
+              userSubmittedQuizCount++;
+            }
+            if (correctSubmits.length > 0) {
+              lectureCorrectQuizCount++;
+              userCorrectQuizCount++;
+            }
+
+            totalQuizCount++;
+            // console.log(totalQuizCount);
+
+            return {
+              quizId: quiz.quizId,
+              quizAnswers: quiz.quizAnswers,
+              quizType: quiz.quizType,
+              question: quiz.question,
+              answer: !lastSubmit
+                ? null
+                : lastSubmit.multipleAnswer === 1
+                  ? JSON.parse(lastSubmit.answer)
+                  : lastSubmit.answer,
+              submitCount: userSubmits.length,
+              correctCount: correctSubmits.length,
+              answerType,
+            };
+          });
+
+          const hasCompletedLecture = lecture.lectureTimeRecords.some(
+            (record) => record.userId === userId && record.status === true,
+          );
+
+          if (hasCompletedLecture) {
+            completedLecturesCount++;
+          }
+
+          return {
+            lectureNumber: lecture.lectureNumber,
+            lectureId: lecture.lectureId,
+            lectureTitle: lecture.title,
+            quizzes,
+            quizTotalCount: lectureQuizTotalCount,
+            correctQuizCount: lectureCorrectQuizCount,
+          };
+        });
+
+        // totalLecturesCount와 completedLecturesCount 계산
+        const totalLecturesCount = lectures.length;
+        // console.log(totalQuizCount);
+        return {
+          enrollmentId: enrollment.id,
+          courseId: enrollment.course.courseId,
+          courseTitle: enrollment.course.title,
+          totalLecturesCount,
+          completedLecturesCount,
+          totalQuizCount: totalQuizCount,
+          userSubmittedQuizCount,
+          userCorrectQuizCount,
+          lectures: mappedLectures,
+        };
+      }),
+    };
+
+    return instanceToPlain(mappedData);
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {
@@ -91,7 +206,6 @@ export class AdminService {
           '이메일이 유효하지 않습니다.',
           HttpStatus.CONFLICT,
         );
-        // throw new UnprocessableEntityException('이미 존재하는 이메일입니다.');
       }
     }
 
@@ -113,14 +227,35 @@ export class AdminService {
     // 모든 코스를 가져옵니다.
     const courses = await this.courseRepository.find({
       relations: ['enrollments'],
-      where: { status: In(['active', 'inactive']) },
     });
 
     // 각 코스별로 수강 인원 수를 계산합니다.
-    courses.forEach((course) => {
+    for (const course of courses) {
       // enrollments 관계를 통해 수강 인원 수를 세고 새 속성에 할당합니다.
       course['enrollmentCount'] = course.enrollments.length;
-    });
+
+      // 퀴즈 타입별 갯수를 계산합니다.
+      const multipleChoiceCount = await this.quizRepository.count({
+        where: {
+          lecture: {
+            courseId: course.courseId,
+          },
+          quizType: 'multiple',
+        },
+      });
+      const descriptiveCount = await this.quizRepository.count({
+        where: {
+          lecture: {
+            courseId: course.courseId,
+          },
+          quizType: 'descriptive',
+        },
+      });
+
+      // 퀴즈 갯수를 새 속성에 할당합니다.
+      course['multipleCount'] = multipleChoiceCount;
+      course['descriptiveCount'] = descriptiveCount;
+    }
 
     return courses;
   }
@@ -139,15 +274,13 @@ export class AdminService {
   async deleteCourses(deleteCourseDto: DeleteCourseDto) {
     const courseIds = deleteCourseDto.courseIds;
     try {
-      const deleteCourses = await this.courseRepository.find({
-        where: { courseId: In(courseIds) },
+      const deleteResult = await this.courseRepository.delete({
+        courseId: In(courseIds),
       });
-      deleteCourses.forEach((course) => {
-        course.status = 'deleted';
-      });
-      // 변경된 상태를 저장
-      await this.courseRepository.save(deleteCourses);
-    } catch {
+      if (deleteResult.affected === 0) {
+        throw new NotFoundException('존재하지 않는 코스입니다.');
+      }
+    } catch (error) {
       throw new NotFoundException('존재하지 않는 코스입니다.');
     }
   }
@@ -156,8 +289,6 @@ export class AdminService {
     const course = await this.courseRepository.findOne({
       where: {
         courseId,
-        status: In(['active', 'inactive']),
-        // lectures: { status: 'active' },
       },
       relations: ['lectures'],
       order: {
@@ -166,9 +297,6 @@ export class AdminService {
         },
       },
     });
-    course.lectures = course.lectures.filter(
-      (lecture) => lecture.status === 'active',
-    );
 
     if (!course) {
       throw new Error('Course not found');
@@ -185,7 +313,6 @@ export class AdminService {
     const course = await this.courseRepository.findOne({
       where: {
         courseId,
-        status: In(['active', 'inactive']),
       },
     });
 
@@ -212,8 +339,6 @@ export class AdminService {
     const course = await this.courseRepository.findOne({
       where: {
         courseId,
-        status: In(['active', 'inactive']),
-        // lectures: { status: 'active' },
       },
       relations: ['lectures'],
     });
@@ -221,52 +346,44 @@ export class AdminService {
       throw new Error('Course not found');
     }
 
-    course.lectures = course.lectures.filter(
-      (lecture) => lecture.status === 'active',
-    );
-
     const existingLectureIds = course.lectures.map(
       (lecture) => lecture.lectureId,
     );
     const dtoLectureIds = updateLecturesDto.lectures.map(
       (dto) => dto.lectureId,
     );
+
     for (const dto of updateLecturesDto.lectures) {
       const lectureDto = plainToInstance(LectureDto, dto);
       if (
+        // 이미 존재하는 강의인지
         lectureDto.lectureId &&
         existingLectureIds.includes(lectureDto.lectureId)
       ) {
         const lecture = course.lectures.find(
           (l) => l.lectureId === lectureDto.lectureId,
         );
-        // lecture.courseId = courseId;
         lecture.title = lectureDto.title;
         lecture.videoLink = lectureDto.videoLink;
         lecture.lectureNumber = lectureDto.lectureNumber;
-        lecture.status = 'active';
         await this.lectureRepository.save(lecture);
       } else {
+        // 새로 추가된 강의인지
         const newLecture = new Lecture();
         newLecture.courseId = courseId;
         newLecture.title = lectureDto.title;
         newLecture.videoLink = lectureDto.videoLink;
         newLecture.lectureNumber = lectureDto.lectureNumber;
-        newLecture.status = 'active';
         course.lectures.push(newLecture);
         await this.lectureRepository.save(newLecture);
       }
     }
-    for (const existingId of existingLectureIds) {
-      if (!dtoLectureIds.includes(existingId)) {
-        const lectureToMarkDeleted = course.lectures.find(
-          (l) => l.lectureId === existingId,
-        );
-        if (lectureToMarkDeleted) {
-          lectureToMarkDeleted.status = 'deleted';
-          await this.lectureRepository.save(lectureToMarkDeleted);
-        }
-      }
+    const lecturesToDelete = existingLectureIds.filter(
+      (existingId) => !dtoLectureIds.includes(existingId),
+    );
+
+    if (lecturesToDelete.length > 0) {
+      await this.lectureRepository.delete(lecturesToDelete);
     }
   }
 
@@ -282,8 +399,10 @@ export class AdminService {
       ],
       where: {
         enrollments: { user: { userId } },
-        status: In(['active', 'inactive']),
-        lectures: { status: 'active' },
+        lectures: {
+          quizzes: { quizSubmits: { userId } },
+          lectureTimeRecords: { userId },
+        },
       },
       order: {
         lectures: { quizzes: { quizSubmits: { createdAt: 'DESC' } } },
@@ -293,24 +412,6 @@ export class AdminService {
     if (!courses.length) {
       return [];
     }
-
-    // 모든 코스를 순회하며 각 렉처의 모든 관련 데이터를 userId에 맞게 필터
-    courses.forEach((course) => {
-      course.lectures.forEach((lecture) => {
-        // 각 퀴즈의 quizSubmits 필터링
-        lecture.quizzes.forEach((quiz) => {
-          quiz.quizSubmits = quiz.quizSubmits.filter((quizSubmit) => {
-            return quizSubmit.userId === userId;
-          });
-        });
-        // 각 렉처의 lectureTimeRecords 필터링
-        lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
-          (record) => {
-            return record.userId === userId;
-          },
-        );
-      });
-    });
 
     return courses;
   }
@@ -331,29 +432,55 @@ export class AdminService {
     const submittedQuiz = await this.quizSubmitRepository.find({
       relations: ['user', 'quiz', 'quiz.lecture', 'quiz.lecture.course'],
       where: {
-        multipleAnswer: 0,
         quiz: {
           lecture: {
             status: 'active',
-            course: { status: In(['active', 'inactive']) },
           },
         },
       },
     });
+
+    // 유저별 동일한 quizId에 대해 가장 최근의 제출만 추적
+    const latestQuizMap = new Map();
+
+    submittedQuiz.forEach((sq) => {
+      const key = `${sq.user.userId}-${sq.quiz.quizId}`;
+      if (
+        !latestQuizMap.has(key) ||
+        latestQuizMap.get(key).createdAt < sq.createdAt
+      ) {
+        latestQuizMap.set(key, sq);
+      }
+    });
+
+    // 최신 퀴즈만 포함된 배열로 변환
+    const latestQuizzes = Array.from(latestQuizMap.values());
+
     // 데이터를 원하는 형식으로 매핑
-    const mappedData = submittedQuiz.map((sq) => ({
-      id: sq.id,
-      userId: sq.user.userId,
-      quizId: sq.quiz.quizId,
-      name: sq.user.name,
-      position: sq.user.position,
-      departmentName: sq.user.departmentName,
-      lectureTitle: sq.quiz.lecture.title,
-      courseTitle: sq.quiz.lecture.course.title,
-      status: sq.status,
-      user: sq.user,
-      quiz: sq.quiz,
-    }));
+    const mappedData = latestQuizzes.map((sq) => {
+      const departmentLabel =
+        departments.find((dept) => dept.value === sq.user.departmentName)
+          ?.label || 'N/A';
+      const positionLabel =
+        positions.find((pos) => pos.value === sq.user.position)?.label || 'N/A';
+
+      return {
+        id: sq.id,
+        userId: sq.user.userId,
+        quizId: sq.quiz.quizId,
+        quizType: sq.multipleAnswer === 1 ? '객관식' : '주관식',
+        name: sq.user.name,
+        position: sq.user.position,
+        positionLabel,
+        departmentName: sq.user.departmentName,
+        departmentLabel,
+        lectureTitle: sq.quiz.lecture.title,
+        courseTitle: sq.quiz.lecture.course.title,
+        status: sq.status,
+        answerType:
+          sq.status === 1 ? '정답' : sq.status === 0 ? '미채점' : '오답',
+      };
+    });
 
     return instanceToPlain(mappedData);
   }
@@ -369,10 +496,6 @@ export class AdminService {
           user: { userId },
           quiz: {
             quizId,
-            lecture: {
-              status: 'active',
-              course: { status: In(['active', 'inactive']) },
-            },
           },
         },
       });
@@ -403,17 +526,22 @@ export class AdminService {
   async getDescriptiveQuiz(userId: number, quizId: number) {
     const descriptiveQuiz = await this.quizSubmitRepository.findOne({
       where: {
-        multipleAnswer: 0,
         user: { userId },
         quiz: {
           quizId,
-          lecture: {
-            status: 'active',
-            course: { status: In(['active', 'inactive']) },
-          },
         },
       },
-      relations: ['user', 'quiz', 'quiz.lecture', 'quiz.lecture.course'],
+      relations: [
+        'user',
+        'quiz',
+        'quiz.quizAnswers',
+        'quiz.lecture',
+        'quiz.lecture.course',
+      ],
+      order: {
+        createdAt: 'DESC',
+        quiz: { quizAnswers: { itemIndex: 'ASC' } },
+      },
     });
 
     return instanceToPlain(descriptiveQuiz);
@@ -425,12 +553,6 @@ export class AdminService {
       where: {
         user: { userId },
         multipleAnswer: 1,
-        quiz: {
-          lecture: {
-            status: 'active',
-            course: { status: In(['active', 'inactive']) },
-          },
-        },
       },
       order: {
         quiz: { quizId: 'DESC' },
@@ -507,10 +629,9 @@ export class AdminService {
 
     try {
       const findLastIndex = await this.quizRepository.findOne({
-        where: { lecture: { lectureId, status: 'active' } },
+        where: { lecture: { lectureId } },
         order: { quizIndex: 'DESC' },
       });
-      console.log(findLastIndex);
 
       const { quizType, question } = createNewQuiz;
 
@@ -580,7 +701,7 @@ export class AdminService {
         const existingAnswerMap = new Map(
           findQuizData.quizAnswers.map((answer) => [answer.itemIndex, answer]),
         );
-        console.log(existingAnswerMap);
+
         const maxExistingIndex = Math.max(...existingAnswerMap.keys());
 
         const updatedAnswers = [];

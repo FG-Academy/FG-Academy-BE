@@ -47,7 +47,9 @@ export class Lecture {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Course, (course) => course.lectures)
+  @ManyToOne(() => Course, (course) => course.lectures, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'courseId' })
   course: Course;
 
@@ -57,6 +59,9 @@ export class Lecture {
   @OneToMany(
     () => LectureTimeRecord,
     (lectureTimeRecord) => lectureTimeRecord.lecture,
+    {
+      cascade: true,
+    },
   )
   lectureTimeRecords: LectureTimeRecord[];
 }

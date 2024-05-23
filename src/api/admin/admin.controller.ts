@@ -120,12 +120,14 @@ export class AdminController {
   /**
    * 퀴즈 정보
    */
+  @Roles('admin', 'tutor')
   @ApiOperation({ summary: '[관리자 화면-퀴즈] 모든 제출된 퀴즈 가져오기' })
   @Get('quizzes')
   async findQuizData() {
     return await this.adminService.findQuizAll();
   }
 
+  @Roles('admin', 'tutor')
   @Post('quizzes/feedback/:userId/:quizId')
   async feedbackDescriptiveQuiz(
     @Param('userId') userId: number,
@@ -139,6 +141,7 @@ export class AdminController {
     );
   }
 
+  @Roles('admin', 'tutor')
   @ApiOperation({
     summary: '[관리자 화면-퀴즈] 유저가 제출한 주관식 퀴즈 가져오기',
   })
@@ -150,6 +153,7 @@ export class AdminController {
     return this.adminService.getDescriptiveQuiz(userId, quizId);
   }
 
+  @Roles('admin', 'tutor')
   @ApiOperation({
     summary: '[관리자 화면-퀴즈] 주관식 퀴즈 채점 화면',
   })
@@ -179,6 +183,7 @@ export class AdminController {
     return this.adminService.deleteQuiz(quizId);
   }
 
+  @Roles('admin', 'tutor')
   @Patch('quizzes/:quizId/feedback')
   async updateQuizAnswer(
     @Param('quizId') quizId: number,

@@ -31,7 +31,7 @@ export class QuizzesService {
       .orderBy('quiz.quizId', 'ASC')
       .addOrderBy('quizAnswer.id', 'ASC')
       .getMany();
-    console.log(quizzes);
+    // console.log(quizzes);
 
     return quizzes;
   }

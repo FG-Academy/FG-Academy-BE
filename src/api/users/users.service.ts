@@ -35,6 +35,7 @@ export class UsersService {
 
   async findAll() {
     const users = await this.usersRepository.find();
+
     const usersForResponse = users.map((user) => instanceToPlain(user));
     return usersForResponse;
   }
@@ -100,7 +101,7 @@ export class UsersService {
   }
 
   async saveMinutes(minutes: number, userId: number, lectureId: number) {
-    const newRecord = await this.lectureTimeRecordRepository.create({
+    const newRecord = this.lectureTimeRecordRepository.create({
       lectureId,
       userId,
       playTime: minutes,
@@ -202,7 +203,7 @@ export class UsersService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: '꽃동산 아카데미 비밀번호 재설정 인증코드',
+      subject: '꽃동산 아카데미 이메일 인증코드',
       text: `꽃동산 아카데미 이메일 인증코드는
 
       ${verficationCode} 
@@ -210,13 +211,12 @@ export class UsersService {
       입니다.`,
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; background-color: #f9f9f9;">
-        <h2 style="text-align: center; color: #333;">꽃동산 아카데미 비밀번호 재설정 인증코드</h2>
+        <h2 style="text-align: center; color: #333;">꽃동산 아카데미 이메일 인증코드</h2>
         <p style="font-size: 16px; color: #555;">안녕하세요,</p>
         <p style="font-size: 16px; color: #555;">꽃동산 아카데미 이메일 인증코드는 다음과 같습니다:</p>
         <div style="text-align: center; margin: 20px 0;">
           <span style="display: inline-block; padding: 10px 20px; font-size: 18px; color: #fff; background-color: #007bff; border-radius: 5px;">${verficationCode}</span>
         </div>
-        <p style="font-size: 16px; color: #555;">이 코드를 사용하여 비밀번호를 재설정하세요.</p>
         <p style="font-size: 16px; color: #555;">감사합니다.</p>
       </div>
     `,

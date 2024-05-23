@@ -5,9 +5,12 @@ import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+// import { json, urlencoded } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
@@ -38,8 +41,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // app.useStaticAssets(join(__dirname, '..', 'public'));
-  // app.useGlobalFilters(new GlobalExceptionFilter());
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.use(cookieParser());
   await app.listen(8080);
