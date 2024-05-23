@@ -23,6 +23,7 @@ import { AuthUser } from '../users/decorators/user.decorator';
 import { FeedbackDto } from './dto/feedback.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CopyCourseDto } from './dto/copy-course.dto';
 
 @ApiTags('admin')
 @Roles('admin')
@@ -74,6 +75,13 @@ export class AdminController {
     await this.adminService.deleteCourses(deleteCourseDto);
 
     return { message: 'Courses deleted successfully' };
+  }
+
+  @Post('/courses/copy')
+  async copyCourses(@Body() copyCourseDto: CopyCourseDto) {
+    const newCourses = await this.adminService.copyCourses(copyCourseDto);
+
+    return { message: 'Courses copied successfully', courses: newCourses };
   }
 
   @ApiOperation({ summary: '[관리자 화면-강의] 한 강의 정보 가져오기' })
