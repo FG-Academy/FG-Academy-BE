@@ -55,6 +55,7 @@ export class FileUploadInterceptor implements NestInterceptor<void, void> {
         ctx.getRequest(),
         ctx.getResponse(),
         (error) => {
+          console.log(error);
           error
             ? reject(
                 error.code === 'LIMIT_FILE_SIZE'

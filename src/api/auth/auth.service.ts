@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from 'src/api/users/users.service';
 import { SignUpDto } from './dto/signUp.dto';
 import { User } from 'src/entities/user.entity';
@@ -32,6 +37,15 @@ export class AuthService {
     delete user.password;
 
     return user;
+  }
+
+  async verifyAndSendEmail(email: string) {
+    const user = await this.usersService.findEmailExist(email);
+    if (user) {
+      throw new ConflictException('이미 가입된 이메일입니다.');
+    }
+    const verficationCode = await this.usersService.sendEmail(email);
+    return verficationCode;
   }
 
   async signIn(signInDto: SignInDto) {
@@ -72,6 +86,7 @@ export class AuthService {
       name: user.name,
       level: user.level,
       enrollmentIds,
+      department: user.departmentName,
       expiresIn: 10 * 60 * 60,
       accessToken,
       refreshToken,

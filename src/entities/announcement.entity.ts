@@ -34,7 +34,9 @@ export class Announcement {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Course, (course) => course.announcements)
+  @ManyToOne(() => Course, (course) => course.announcements, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'courseId' })
   course: Course;
 }

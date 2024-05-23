@@ -27,7 +27,7 @@ export class DashboardService {
 
   async findAll(userId: number) {
     const userEnrollments = await this.enrollmentRepository.find({
-      where: { user: { userId }, course: { status: 'active' } },
+      where: { user: { userId } },
       relations: ['course'],
     });
 
@@ -37,7 +37,7 @@ export class DashboardService {
 
         // 해당 코스에 속한 강의 총 개수
         const totalCourseLength = await this.lectureRepository.count({
-          where: { status: 'active', course: { courseId, status: 'active' } },
+          where: { course: { courseId } },
         });
 
         // 사용자가 수강 완료한 강의 개수
@@ -45,10 +45,8 @@ export class DashboardService {
           where: {
             user: { userId },
             lecture: {
-              status: 'active',
-              course: { courseId, status: 'active' },
+              course: { courseId },
             },
-            // status: true,
           },
           order: { updatedAt: 'DESC' },
         });
@@ -57,13 +55,13 @@ export class DashboardService {
         );
 
         const firstLecture = await this.lectureRepository.findOneBy({
-          status: 'active',
           courseId,
           lectureNumber: 1,
         });
 
         return {
           courseId,
+          status: enrollment.course.status,
           title: enrollment.course.title,
           curriculum: enrollment.course.curriculum,
           thumbnailPath: enrollment.course.thumbnailImagePath,
@@ -90,7 +88,6 @@ export class DashboardService {
     const submittedQuizzes = await this.quizSubmitRepository.find({
       where: {
         userId,
-        quiz: { lecture: { status: 'active', course: { status: 'active' } } },
       },
       relations: [
         'quiz',

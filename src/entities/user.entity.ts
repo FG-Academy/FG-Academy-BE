@@ -68,16 +68,23 @@ export class User {
   })
   updatedAt: Date;
 
-  @OneToMany(() => QuizSubmit, (quizSubmit) => quizSubmit.user)
+  @OneToMany(() => QuizSubmit, (quizSubmit) => quizSubmit.user, {
+    cascade: true,
+  })
   quizSubmits: QuizSubmit[];
 
   @OneToMany(
     () => LectureTimeRecord,
     (lectureTimeRecord) => lectureTimeRecord.user,
+    {
+      cascade: true,
+    },
   )
   lectureTimeRecords: LectureTimeRecord[];
 
-  @OneToMany(() => Enrollment, (enrollment) => enrollment.user)
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.user, {
+    cascade: true,
+  })
   enrollments: Enrollment[];
 
   @BeforeInsert()

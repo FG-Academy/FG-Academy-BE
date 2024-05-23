@@ -42,12 +42,18 @@ export class Course {
   })
   updatedAt: Date;
 
-  @OneToMany(() => Lecture, (lecture) => lecture.course)
+  @OneToMany(() => Lecture, (lecture) => lecture.course, {
+    cascade: true,
+  })
   lectures: Lecture[];
 
-  @OneToMany(() => Announcement, (announcement) => announcement.course)
+  @OneToMany(() => Announcement, (announcement) => announcement.course, {
+    cascade: true,
+  })
   announcements: Announcement[];
 
-  @OneToMany(() => Enrollment, (enrollment) => enrollment.course)
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.course, {
+    cascade: true,
+  })
   enrollments: Enrollment[];
 }
