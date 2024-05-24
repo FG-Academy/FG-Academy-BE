@@ -23,6 +23,7 @@ import { CreateQuizDto } from './dto/create-new-quiz.dto';
 import { FeedbackDto } from './dto/feedback.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { departments, positions } from './type/type';
+import { CopyCourseDto } from './dto/copy-course.dto';
 
 @Injectable()
 export class AdminService {
@@ -45,7 +46,22 @@ export class AdminService {
   /** 유저 정보 */
   async findAllUsers() {
     const users = await this.usersRepository.find();
-    const usersForResponse = users.map((user) => instanceToPlain(user));
+    const usersForResponse = users.map((user) => {
+      const userPlain = instanceToPlain(user);
+
+      const departmentLabel =
+        departments.find((dept) => dept.value === user.departmentName)?.label ||
+        'N/A';
+      const positionLabel =
+        positions.find((pos) => pos.value === user.position)?.label || 'N/A';
+
+      return {
+        ...userPlain,
+        departmentLabel,
+        positionLabel,
+      };
+    });
+
     return usersForResponse;
   }
 
@@ -282,6 +298,95 @@ export class AdminService {
       }
     } catch (error) {
       throw new NotFoundException('존재하지 않는 코스입니다.');
+    }
+  }
+
+  async copyCourses(copyCourseDto: CopyCourseDto) {
+    const courseIds = copyCourseDto.courseIds;
+    try {
+      const courses = await this.courseRepository.find({
+        where: { courseId: In(courseIds) },
+        relations: [
+          'lectures',
+          'lectures.quizzes',
+          'lectures.quizzes.quizAnswers',
+        ],
+      });
+
+      if (courses.length === 0) {
+        throw new NotFoundException('존재하지 않는 코스입니다.');
+      }
+
+      const newCourses = await Promise.all(
+        courses.map(async (course) => {
+          const newCourse = this.courseRepository.create({
+            title: `복사본-${course.title}`,
+            description: course.description,
+            thumbnailImagePath: course.thumbnailImagePath,
+            level: course.level,
+            curriculum: course.curriculum,
+            openDate: course.openDate,
+            finishDate: course.finishDate,
+            status: course.status,
+          });
+
+          const savedCourse = await this.courseRepository.save(newCourse);
+
+          newCourse.lectures = await Promise.all(
+            course.lectures.map(async (lecture) => {
+              const newLecture = this.lectureRepository.create({
+                course: savedCourse,
+                title: lecture.title,
+                lectureNumber: lecture.lectureNumber,
+                videoLink: lecture.videoLink,
+                attachmentFile: lecture.attachmentFile,
+                // ... 나머지 속성들 추가
+              });
+
+              const savedLecture =
+                await this.lectureRepository.save(newLecture);
+
+              newLecture.quizzes = await Promise.all(
+                lecture.quizzes.map(async (quiz) => {
+                  const newQuiz = this.quizRepository.create({
+                    quizType: quiz.quizType,
+                    quizIndex: quiz.quizIndex,
+                    question: quiz.question,
+                    status: quiz.status,
+                    lecture: savedLecture, // 복사된 lecture를 참조
+                  });
+
+                  const savedQuiz = await this.quizRepository.save(newQuiz);
+
+                  newQuiz.quizAnswers = await Promise.all(
+                    quiz.quizAnswers.map((quizAnswer) => {
+                      return this.quizAnswerRepository.create({
+                        itemIndex: quizAnswer.itemIndex,
+                        item: quizAnswer.item,
+                        isAnswer: quizAnswer.isAnswer,
+                        status: quizAnswer.status,
+                        quiz: savedQuiz, // 복사된 quiz를 참조
+                      });
+                    }),
+                  );
+
+                  await this.quizAnswerRepository.save(newQuiz.quizAnswers);
+
+                  return savedQuiz;
+                }),
+              );
+
+              return savedLecture;
+            }),
+          );
+
+          return savedCourse;
+        }),
+      );
+
+      return newCourses;
+    } catch (error) {
+      throw new NotFoundException('코스 복사 중 오류가 발생했습니다.');
     }
   }
 
