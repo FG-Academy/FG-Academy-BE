@@ -6,10 +6,17 @@ import { CoursesService } from './courses.service';
 import { Lecture } from 'src/entities/lecture.entity';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
+import { Quiz } from 'src/entities/quiz.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Course, Lecture, Enrollment, LectureTimeRecord]),
+    TypeOrmModule.forFeature([
+      Course,
+      Lecture,
+      Enrollment,
+      LectureTimeRecord,
+      Quiz,
+    ]),
   ],
   controllers: [CoursesController],
   providers: [CoursesService],
