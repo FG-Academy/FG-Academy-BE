@@ -6,6 +6,7 @@ import { Lecture } from 'src/entities/lecture.entity';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import moment from 'moment-timezone';
+import { Quiz } from 'src/entities/quiz.entity';
 
 moment.tz.setDefault('Asia/Seoul');
 
@@ -20,6 +21,8 @@ export class CoursesService {
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(LectureTimeRecord)
     private readonly lectureTimeRecordRepository: Repository<LectureTimeRecord>,
+    @InjectRepository(Quiz)
+    private quizRepository: Repository<Quiz>,
   ) {}
 
   async findAll(): Promise<Course[]> {
@@ -36,12 +39,35 @@ export class CoursesService {
   }
 
   async getAllLecturesByCourseId(courseId: number): Promise<any> {
-    const course = await this.lectureRepository.find({
+    const lectures = await this.lectureRepository.find({
       where: { courseId },
       order: { lectureNumber: 'ASC' },
     });
 
-    return course;
+    for (const lecture of lectures) {
+      const multipleChoiceCount = await this.quizRepository.count({
+        where: {
+          lecture: {
+            lectureId: lecture.lectureId,
+          },
+          quizType: 'multiple',
+        },
+      });
+
+      const descriptiveCount = await this.quizRepository.count({
+        where: {
+          lecture: {
+            lectureId: lecture.lectureId,
+          },
+          quizType: 'descriptive',
+        },
+      });
+
+      lecture['multipleChoiceCount'] = multipleChoiceCount;
+      lecture['descriptiveCount'] = descriptiveCount;
+    }
+
+    return lectures;
   }
 
   async getLecturesProgress(courseId: number, userId: number) {
