@@ -34,11 +34,11 @@ export class QnaService {
 
   async deleteQuestionPost(questionId: number) {
     try {
-      const result = await this.questionRepository.delete({
+      await this.questionRepository.delete({
         questionId: questionId,
       });
 
-      console.log(result);
+      // console.log(result);
     } catch (err) {
       throw err;
     }
@@ -66,7 +66,7 @@ export class QnaService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async findQuestion(pageNum) {
+  async findQuestion(pageNum: number) {
     const itemsPerPage = 10;
     const [list, total] = await this.questionRepository.findAndCount({
       skip: (pageNum - 1) * itemsPerPage,
@@ -147,7 +147,7 @@ export class QnaService {
         answerId,
       });
     } else {
-      throw new Error('삭제할 권한이 없습니다.');
+      throw new NotFoundException('삭제할 권한이 없습니다.');
     }
   }
 

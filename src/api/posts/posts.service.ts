@@ -42,8 +42,8 @@ export class PostsService {
     return this.announcementRepository.save(newPost);
   }
 
-  async updatePost(updatePostDto: UpdatePostDto) {
-    const { announcementId, title, content } = updatePostDto;
+  async updatePost(announcementId: number, updatePostDto: UpdatePostDto) {
+    const { title, content } = updatePostDto;
     const post = await this.announcementRepository.findOne({
       where: { announcementId },
     });

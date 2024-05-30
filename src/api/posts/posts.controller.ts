@@ -30,17 +30,19 @@ export class PostsController {
   async getOneQnaPosts(@Param('announcementId') announcementId: number) {
     return this.postsService.findOnePost(announcementId);
   }
+  @Roles('admin', 'manager')
+  @Patch('/:announcementId')
+  async updatePost(
+    @Param('announcementId') announcementId: number,
+    @Body() updatePostDto: UpdatePostDto,
+  ) {
+    return this.postsService.updatePost(announcementId, updatePostDto);
+  }
 
   @Roles('admin', 'manager')
   @Post()
   async createPost(@Body() createPostDto: CreatePostDto) {
     return this.postsService.createPost(createPostDto);
-  }
-
-  @Roles('admin', 'manager')
-  @Patch()
-  async updatePost(@Body() updatePostDto: UpdatePostDto) {
-    return this.postsService.updatePost(updatePostDto);
   }
 
   @Roles('admin', 'manager')
