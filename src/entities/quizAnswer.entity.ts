@@ -18,7 +18,7 @@ export class QuizAnswer {
   @Column({ comment: '퀴즈id' })
   quizId: number;
 
-  @Column({ length: 20, comment: '퀴즈 문항 내용' })
+  @Column({ length: 200, comment: '퀴즈 문항 내용' })
   item: string;
 
   @Column({ comment: '해당 문항이 정답인지에 대한 여부' })

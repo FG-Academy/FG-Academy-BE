@@ -9,6 +9,8 @@ import { LectureTimeRecord } from '../entities/lectureTimeRecord.entity';
 import { Quiz } from '../entities/quiz.entity';
 import { QuizAnswer } from '../entities/quizAnswer.entity';
 import { QuizSubmit } from '../entities/quizSubmit.entity';
+import { Question } from 'src/entities/question.entity';
+import { Answer } from 'src/entities/answer.entity';
 
 export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
   imports: [ConfigModule],
@@ -32,6 +34,8 @@ export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
       Quiz,
       QuizAnswer,
       QuizSubmit,
+      Question,
+      Answer,
     ],
     // entities: [__dirname + '/src/entities/*.ts'],
     // migrations: [__dirname + '/src/database/migrations/*.ts'],

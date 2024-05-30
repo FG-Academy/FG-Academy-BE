@@ -11,6 +11,8 @@ import { LectureTimeRecord } from './lectureTimeRecord.entity';
 import { Enrollment } from './enrollment.entity';
 import { Exclude } from 'class-transformer';
 import * as bcrypt from 'bcryptjs';
+import { Question } from './question.entity';
+import { Answer } from './answer.entity';
 
 @Entity()
 export class User {
@@ -86,6 +88,14 @@ export class User {
     cascade: true,
   })
   enrollments: Enrollment[];
+
+  // 질문 게시판에 따른 question Entity 와의 관계 추가
+  @OneToMany(() => Question, (question) => question.user) // New relationship for Questions
+  questions: Question[];
+
+  // 질문 게시판에 따른 question Entity 와의 관계 추가
+  @OneToMany(() => Answer, (answer) => answer.user) // New relationship for Questions
+  answers: Answer[];
 
   @BeforeInsert()
   // @BeforeUpdate()
