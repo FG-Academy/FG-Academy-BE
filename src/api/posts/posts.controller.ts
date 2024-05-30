@@ -31,19 +31,19 @@ export class PostsController {
     return this.postsService.findOnePost(announcementId);
   }
 
-  @Roles('admin')
+  @Roles('admin', 'manager')
   @Post()
   async createPost(@Body() createPostDto: CreatePostDto) {
     return this.postsService.createPost(createPostDto);
   }
 
-  @Roles('admin')
+  @Roles('admin', 'manager')
   @Patch()
   async updatePost(@Body() updatePostDto: UpdatePostDto) {
     return this.postsService.updatePost(updatePostDto);
   }
 
-  @Roles('admin')
+  @Roles('admin', 'manager')
   @Delete()
   async deletePosts(@Body() deletePostDto: DeletePostDto) {
     await this.postsService.deletePosts(deletePostDto.announcementIds);

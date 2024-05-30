@@ -16,6 +16,7 @@ import { AdminModule } from './api/admin/admin.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PostsModule } from './api/posts/posts.module';
+import { QnaModule } from './api/qna/qna.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PostsModule } from './api/posts/posts.module';
     }),
     DashboardModule,
     AdminModule,
+    QnaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
