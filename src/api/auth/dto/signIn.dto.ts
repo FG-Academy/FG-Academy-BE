@@ -7,6 +7,6 @@ export class SignInDto {
 
   @IsDefined()
   @IsNotEmpty()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 }

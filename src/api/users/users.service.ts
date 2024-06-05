@@ -19,6 +19,12 @@ import { instanceToPlain } from 'class-transformer';
 import * as ExcelJS from 'exceljs';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { Course } from 'src/entities/course.entity';
+import {
+  Department,
+  departments,
+  Position,
+  positions,
+} from '../admin/type/type';
 
 @Injectable()
 export class UsersService {
@@ -247,52 +253,55 @@ export class UsersService {
   async createUsersByFile(): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(
-      `${__dirname}/../../../src/api/users/0412.xlsx`,
+      `${__dirname}/../../../src/api/users/0605.xlsx`,
     );
-    const worksheet = workbook.getWorksheet('전체');
+    const worksheet = workbook.getWorksheet('Sheet1');
 
     try {
       await this.entityManager.transaction(
         async (transactionalEntityManager) => {
           for (const row of worksheet.getRows(2, worksheet.rowCount - 1)) {
-            const id = row.getCell(1).value.toString();
-            // 강의 완수 데이터를 처리
-            const essenceValue = row.getCell(5).value.toString();
-            const doctrineValue = row.getCell(6).value.toString();
+            // console.log(row);
+            // const department = row.getCell(1).value.toString();
+            const name = row.getCell(2).value.toString();
+            const positionLabel = row.getCell(3).value.toString();
+            const phoneNumber = row.getCell(4).value || '';
+            const birthDate = row.getCell(5).value.toString();
+            const birth = row.getCell(6).value.toString();
+            const birthDateFormatted = `${birth.slice(0, 4)}-${birth.slice(4, 6)}-${birth.slice(6, 8)}`;
+            const yearsOfService = (row.getCell(7).value as number) || 0;
+            const id = row.getCell(8).value.toString();
+            const email = row.getCell(9).value.toString();
+            const essenceCompleted = row.getCell(10).value as number;
+            const doctrineCompleted = row.getCell(11).value as number;
+            const departmentNameLabel = row.getCell(12).value.toString();
 
-            // "완료"일 경우 21을 반환하고, 아닐 경우 parseInt로 숫자 변환
-            // const essencePercentage =
-            //   essenceValue === '완료' ? 21 : parseInt(essenceValue);
-            // const doctrinePercentage =
-            //   doctrineValue === '완료' ? 54 : parseInt(doctrineValue);
+            const departmentName =
+              departments.find((dept) => dept.label === departmentNameLabel)
+                ?.value || Department.ETC;
+            const position =
+              positions.find((pos) => pos.label === positionLabel)?.value ||
+              Position.ETC;
 
-            const [name, birthDate] = this.extractUserInfo(id);
-
-            const password = id; // 예시로 ID를 비밀번호로 사용
+            const password = birthDate; // 예시로 ID를 비밀번호로 사용
             const newUser = transactionalEntityManager.create(User, {
               nameBirthId: id,
               name,
-              birthDate,
+              position,
+              phoneNumber: phoneNumber as string,
+              birthDate: new Date(birthDateFormatted),
+              yearsOfService,
               password,
+              email,
+              departmentName,
             });
             await transactionalEntityManager.save(newUser);
 
-            const essenceCompleted = await this.calculateCompleted(
-              21,
-              essenceValue,
-            );
-            const doctrineCompleted = await this.calculateCompleted(
-              54,
-              doctrineValue,
-            );
-
-            // console.log(newUser, essenceCompleted, doctrineCompleted);
-
             const oneCourse = await this.courseRepository.findOneOrFail({
-              where: { courseId: 1 },
+              where: { courseId: 8 },
             });
             const twoCourse = await this.courseRepository.findOneOrFail({
-              where: { courseId: 2 },
+              where: { courseId: 5 },
             });
 
             await transactionalEntityManager.save(Enrollment, {
@@ -312,6 +321,7 @@ export class UsersService {
       console.error('Error during transaction:', err);
       throw err; // 에러를 다시 던져서 호출자에게 알립니다.
     }
+    console.log('완료');
   }
 
   private async calculateCompleted(total: number, percentage: number | string) {
