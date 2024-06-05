@@ -25,12 +25,15 @@ import {
   Position,
   positions,
 } from '../admin/type/type';
+import { Lecture } from 'src/entities/lecture.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>, // UserRepository 주입
+    @InjectRepository(Lecture)
+    private lectureRepository: Repository<Lecture>, // UserRepository 주입
     @InjectRepository(LectureTimeRecord)
     private lectureTimeRecordRepository: Repository<LectureTimeRecord>, // UserRepository 주입
     private readonly mailerService: MailerService,
@@ -314,6 +317,43 @@ export class UsersService {
               course: twoCourse,
               completedNumber: doctrineCompleted,
             });
+
+            // LectureTimeRecord 생성
+            for (let i = 1; i <= essenceCompleted; i++) {
+              const lecture = await this.lectureRepository.findOneOrFail({
+                where: { course: oneCourse, lectureNumber: i },
+              });
+
+              const lectureTimeRecord = transactionalEntityManager.create(
+                LectureTimeRecord,
+                {
+                  user: newUser,
+                  lecture,
+                  playtime: 0, // 초기값 설정
+                  status: true, // 수강 완료로 설정
+                },
+              );
+              await transactionalEntityManager.save(lectureTimeRecord);
+            }
+
+            // console.log(doctrineCompleted);
+
+            for (let i = 1; i <= doctrineCompleted; i++) {
+              const lecture = await this.lectureRepository.findOneOrFail({
+                where: { course: twoCourse, lectureNumber: i },
+              });
+
+              const lectureTimeRecord = transactionalEntityManager.create(
+                LectureTimeRecord,
+                {
+                  user: newUser,
+                  lecture,
+                  playtime: 0,
+                  status: true, // 수강 완료로 설정
+                },
+              );
+              await transactionalEntityManager.save(lectureTimeRecord);
+            }
           }
         },
       );
@@ -322,6 +362,7 @@ export class UsersService {
       throw err; // 에러를 다시 던져서 호출자에게 알립니다.
     }
     console.log('완료');
+    console.log('zz');
   }
 
   private async calculateCompleted(total: number, percentage: number | string) {

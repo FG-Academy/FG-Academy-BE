@@ -8,11 +8,18 @@ import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { Course } from 'src/entities/course.entity';
+import { Lecture } from 'src/entities/lecture.entity';
 // import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, LectureTimeRecord, Enrollment, Course]),
+    TypeOrmModule.forFeature([
+      User,
+      LectureTimeRecord,
+      Enrollment,
+      Course,
+      Lecture,
+    ]),
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {

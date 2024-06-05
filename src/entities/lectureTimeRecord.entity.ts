@@ -20,7 +20,7 @@ export class LectureTimeRecord {
   @PrimaryColumn()
   lectureId: number;
 
-  @Column()
+  @Column({ default: 0 })
   playTime: number;
 
   @Column({ default: false })
