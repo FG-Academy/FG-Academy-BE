@@ -24,6 +24,7 @@ import { FeedbackDto } from './dto/feedback.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { departments, positions } from './type/type';
 import { CopyCourseDto } from './dto/copy-course.dto';
+import { Enrollment } from 'src/entities/enrollment.entity';
 
 @Injectable()
 export class AdminService {
@@ -41,6 +42,8 @@ export class AdminService {
     private courseRepository: Repository<Course>,
     @InjectRepository(Lecture)
     private lectureRepository: Repository<Lecture>,
+    @InjectRepository(Enrollment)
+    private enrollmentRepository: Repository<Enrollment>,
   ) {}
 
   /** 유저 정보 */
@@ -74,7 +77,7 @@ export class AdminService {
         'enrollments',
         'enrollments.course',
         'enrollments.course.lectures',
-        'enrollments.course.lectures.lectureTimeRecords',
+        // 'enrollments.course.lectures.lectureTimeRecords',
         'enrollments.course.lectures.quizzes',
         'enrollments.course.lectures.quizzes.quizSubmits',
         'enrollments.course.lectures.quizzes.quizAnswers',
@@ -99,7 +102,7 @@ export class AdminService {
     const filteredEnrollments = user.enrollments;
 
     const mappedData = {
-      ...user,
+      // ...user,
       password: null,
       refreshToken: null,
       enrollments: filteredEnrollments.map((enrollment) => {
@@ -107,7 +110,7 @@ export class AdminService {
         let totalQuizCount = 0;
         let userSubmittedQuizCount = 0;
         let userCorrectQuizCount = 0;
-        let completedLecturesCount = 0;
+        // let completedLecturesCount = 0;
 
         const mappedLectures = lectures.map((lecture) => {
           let lectureQuizTotalCount = 0;
@@ -167,13 +170,13 @@ export class AdminService {
             };
           });
 
-          const hasCompletedLecture = lecture.lectureTimeRecords.some(
-            (record) => record.userId === userId && record.status === true,
-          );
+          // const hasCompletedLecture = lecture.lectureTimeRecords.some(
+          //   (record) => record.userId === userId && record.status === true,
+          // );
 
-          if (hasCompletedLecture) {
-            completedLecturesCount++;
-          }
+          // if (hasCompletedLecture) {
+          //   completedLecturesCount++;
+          // }
 
           return {
             lectureNumber: lecture.lectureNumber,
@@ -187,13 +190,12 @@ export class AdminService {
 
         // totalLecturesCount와 completedLecturesCount 계산
         const totalLecturesCount = lectures.length;
-        // console.log(totalQuizCount);
         return {
           enrollmentId: enrollment.id,
           courseId: enrollment.course.courseId,
           courseTitle: enrollment.course.title,
           totalLecturesCount,
-          completedLecturesCount,
+          // completedLecturesCount,
           totalQuizCount: totalQuizCount,
           userSubmittedQuizCount,
           userCorrectQuizCount,
@@ -203,6 +205,102 @@ export class AdminService {
     };
 
     return instanceToPlain(mappedData);
+  }
+
+  async findUserEnrollmentsById(userId: number) {
+    const enrollments = await this.enrollmentRepository.find({
+      where: { user: { userId } },
+      relations: ['course'],
+      select: { course: { courseId: true, title: true } },
+    });
+
+    for (const enrollment of enrollments) {
+      const lectureCount = await this.lectureRepository.count({
+        where: { course: { courseId: enrollment.course.courseId } },
+      });
+      enrollment.course['totalLectureLength'] = lectureCount;
+    }
+
+    return enrollments;
+  }
+
+  async findUserLectureDetail(userId: number, courseId: number) {
+    const lectures = await this.lectureRepository.find({
+      where: { course: { courseId } },
+      relations: ['quizzes', 'quizzes.quizAnswers'],
+    });
+
+    const lectureDetails = await Promise.all(
+      lectures.map(async (lecture) => {
+        // Iterate through each quiz in the lecture
+        const quizzes = await Promise.all(
+          lecture.quizzes.map(async (quiz) => {
+            // console.log('quiz', quiz);
+            // Fetch quizSubmits separately based on userId and quizId
+            const quizSubmits = await this.quizSubmitRepository.find({
+              where: { user: { userId }, quiz: { quizId: quiz.quizId } },
+              order: { quiz: { quizSubmits: { createdAt: 'DESC' } } },
+            });
+
+            // console.log('quizSubmits', quizSubmits);
+
+            let lastSubmit = null;
+            let answerType = '미채점';
+            if (quizSubmits.length > 0) {
+              lastSubmit = quizSubmits.reduce((latest, current) =>
+                new Date(latest.createdAt) > new Date(current.createdAt)
+                  ? latest
+                  : current,
+              );
+              answerType =
+                lastSubmit.status === 1
+                  ? '정답'
+                  : lastSubmit.status === 0
+                    ? '미채점'
+                    : '오답';
+            }
+
+            const submitCount = quizSubmits.length;
+            const correctCount = quizSubmits.filter(
+              (submit) => submit.status === 1,
+            ).length;
+
+            console.log('last', lastSubmit);
+
+            return {
+              quizId: quiz.quizId,
+              quizAnswers: quiz.quizAnswers,
+              quizType: quiz.quizType,
+              question: quiz.question,
+              answer: !lastSubmit
+                ? null
+                : lastSubmit.multipleAnswer === 1
+                  ? JSON.parse(lastSubmit.answer)
+                  : lastSubmit.answer,
+              submitCount: submitCount,
+              correctCount: correctCount,
+              answerType,
+            };
+          }),
+        );
+
+        const quizTotalCount = quizzes.length;
+        const correctQuizCount = quizzes.filter(
+          (quiz) => quiz.correctCount > 0,
+        ).length;
+
+        return {
+          lectureNumber: lecture.lectureNumber,
+          lectureId: lecture.lectureId,
+          lectureTitle: lecture.title,
+          quizzes: quizzes,
+          quizTotalCount: quizTotalCount,
+          correctQuizCount: correctQuizCount,
+        };
+      }),
+    );
+
+    return lectureDetails;
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {
