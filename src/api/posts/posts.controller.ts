@@ -14,18 +14,21 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { DeletePostDto } from './dto/delete-post.dto';
 import { Roles } from '../users/decorators/role.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('posts')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
+  @Public() // 누구나 공지사항은 열람할 수 있도록
   @Get()
   async getAllPosts(@Query('page') page: string) {
     const pageNumber = parseInt(page, 10) || 1;
     return this.postsService.findPosts(pageNumber);
   }
 
+  @Public() // 누구나 공지사항은 열람할 수 있도록
   @Get('/:announcementId')
   async getOneQnaPosts(@Param('announcementId') announcementId: number) {
     return this.postsService.findOnePost(announcementId);
