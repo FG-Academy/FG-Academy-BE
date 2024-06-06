@@ -97,13 +97,14 @@ export class UsersController {
     return { message: 'Successfully saved playtime' };
   }
 
-  @Patch('/completed/:lectureId')
+  @Patch('/completed/:lectureId/:courseId')
   async updateCompleted(
     @Param('lectureId') lectureId: number,
+    @Param('courseId') courseId: number,
     // @Body() updateCompletedDto: UpdateCompletedDto,
     @AuthUser('userId') userId: number,
   ) {
-    await this.usersService.updateCompleted(userId, lectureId);
+    await this.usersService.updateCompleted(userId, lectureId, courseId);
     return { message: 'Successfully updated completed status' };
   }
 }

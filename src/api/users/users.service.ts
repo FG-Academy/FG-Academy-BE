@@ -39,6 +39,8 @@ export class UsersService {
     private readonly mailerService: MailerService,
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
+    @InjectRepository(Enrollment)
+    private enrollmentRepository: Repository<Enrollment>,
     private entityManager: EntityManager,
   ) {}
 
@@ -123,30 +125,51 @@ export class UsersService {
     return true;
   }
 
-  async updateCompleted(userId: number, lectureId: number) {
-    // 예외처리를 잘 해야할 듯 하다.
-    console.log(userId, lectureId);
-    const isExist = await this.lectureTimeRecordRepository.findOne({
+  async updateCompleted(userId: number, lectureId: number, courseId: number) {
+    const ltr = await this.lectureTimeRecordRepository.findOne({
       where: { user: { userId }, lecture: { lectureId } },
     });
+    console.log(ltr);
 
-    if (!isExist) {
+    if (!ltr) {
       throw new HttpException(
         '수강한 적이 없는 강의입니다.',
         HttpStatus.BAD_REQUEST,
       );
+    } else if (ltr.status) {
+      throw new HttpException(
+        '이미 수강 완료한 강의입니다.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    const result = await this.lectureTimeRecordRepository.update(
-      {
-        userId,
-        lectureId,
-      },
-      {
-        status: true,
-      },
-    );
-    return result;
+    try {
+      const enrollment = await this.enrollmentRepository.findOne({
+        where: { user: { userId }, course: { courseId } },
+      });
+      const newCompletedNumber = (enrollment.completedNumber || 0) + 1;
+      await this.enrollmentRepository.update(
+        {
+          user: { userId },
+          course: { courseId },
+        },
+        {
+          completedNumber: newCompletedNumber,
+        },
+      );
+
+      await this.lectureTimeRecordRepository.update(
+        {
+          userId,
+          lectureId,
+        },
+        {
+          status: true,
+        },
+      );
+    } catch {
+      console.log('error');
+    }
   }
 
   async updateDB(data: UpdateUserDto, userId: number) {
