@@ -46,6 +46,21 @@ export class AdminController {
     return this.adminService.findUserById(userId);
   }
 
+  @ApiOperation({ summary: '[관리자 화면-유저] 한 유저 정보 가져오기' })
+  @Get('/users/:userId/enrollments')
+  findUserEnrollmentsById(@Param('userId') userId: number) {
+    return this.adminService.findUserEnrollmentsById(userId);
+  }
+
+  @ApiOperation({ summary: '[관리자 화면-유저] 한 유저 정보 가져오기' })
+  @Get('/users/:userId/enrollments/:courseId')
+  findUserLectureDetail(
+    @Param('userId') userId: number,
+    @Param('courseId') courseId: number,
+  ) {
+    return this.adminService.findUserLectureDetail(userId, courseId);
+  }
+
   @Patch('/users/:userId')
   async updateOneByUserId(
     @Body() dto: UpdateUserDto,
