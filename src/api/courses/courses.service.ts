@@ -248,7 +248,7 @@ export class CoursesService {
         'lectures.quizzes',
         'lectures.quizzes.quizAnswers',
         'lectures.quizzes.quizSubmits',
-        'lectures.lectureTimeRecords',
+        // 'lectures.lectureTimeRecords',
       ],
       order: {
         lectures: {
@@ -271,11 +271,11 @@ export class CoursesService {
         });
       });
       // 각 lecture의 lectureTimeRecords 필터링
-      lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
-        (record) => {
-          return record.userId === userId;
-        },
-      );
+      // lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
+      //   (record) => {
+      //     return record.userId === userId;
+      //   },
+      // );
     });
 
     return course;
