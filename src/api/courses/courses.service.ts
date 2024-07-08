@@ -28,7 +28,7 @@ export class CoursesService {
   async findAll(): Promise<Course[]> {
     return await this.courseRepository.find({
       where: { status: 'active' },
-      order: { title: 'ASC', curriculum: 'ASC' },
+      order: { curriculum: 'ASC', title: 'ASC' },
     });
   }
 
