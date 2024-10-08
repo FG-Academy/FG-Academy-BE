@@ -25,6 +25,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { departments, positions } from './type/type';
 import { CopyCourseDto } from './dto/copy-course.dto';
 import { Enrollment } from 'src/entities/enrollment.entity';
+import { CategoryDto, UpdateCategoryDto } from './dto/update-category.dto';
+import { Category } from 'src/entities/category.entity';
 
 @Injectable()
 export class AdminService {
@@ -44,6 +46,8 @@ export class AdminService {
     private lectureRepository: Repository<Lecture>,
     @InjectRepository(Enrollment)
     private enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
   ) {}
 
   /** 유저 정보 */
@@ -340,7 +344,7 @@ export class AdminService {
   async findAll(): Promise<Course[]> {
     // 모든 코스를 가져옵니다.
     const courses = await this.courseRepository.find({
-      relations: ['enrollments'],
+      relations: ['enrollments', 'category'],
     });
 
     // 각 코스별로 수강 인원 수를 계산합니다.
@@ -377,6 +381,9 @@ export class AdminService {
   async createCourse(createCourseDto: CreateCourseDto, filepath: string) {
     const newCourseData = this.courseRepository.create({
       thumbnailImagePath: filepath,
+      category: {
+        name: createCourseDto.curriculum,
+      },
       ...createCourseDto,
     });
 
@@ -408,6 +415,7 @@ export class AdminService {
           'lectures',
           'lectures.quizzes',
           'lectures.quizzes.quizAnswers',
+          'category',
         ],
       });
 
@@ -426,6 +434,7 @@ export class AdminService {
             openDate: course.openDate,
             finishDate: course.finishDate,
             status: course.status,
+            category: course.category,
           });
 
           const savedCourse = await this.courseRepository.save(newCourse);
@@ -493,7 +502,7 @@ export class AdminService {
       where: {
         courseId,
       },
-      relations: ['lectures'],
+      relations: ['lectures', 'category'],
       order: {
         lectures: {
           lectureNumber: 'ASC', // Sort lectures by lectureNumber in ascending order
@@ -517,23 +526,27 @@ export class AdminService {
       where: {
         courseId,
       },
+      relations: ['category'],
     });
 
     if (!course) {
       throw new Error('Course not found');
     }
+    console.log(updateCourseDto);
 
     course.courseId = courseId;
     course.title = updateCourseDto.title ?? course.title;
     course.status = updateCourseDto.status ?? course.status;
     course.level = updateCourseDto.level ?? course.level;
     course.description = updateCourseDto.description ?? course.description;
-    course.curriculum = updateCourseDto.curriculum ?? course.curriculum;
+    // course.curriculum = updateCourseDto.curriculum ?? course.curriculum;
+    course.category.name = updateCourseDto.curriculum ?? course.category.name;
     course.openDate = updateCourseDto.openDate ?? course.openDate;
     course.finishDate = updateCourseDto.finishDate ?? course.finishDate;
     if (filepath) {
       course.thumbnailImagePath = filepath;
     }
+    console.log(course);
 
     await this.courseRepository.update({ courseId }, course); // Save the course with all changes
   }
@@ -626,6 +639,66 @@ export class AdminService {
       .getRawMany();
 
     return uniqueCurriculums.map((entry) => entry.curriculum);
+  }
+
+  /**
+   * 카테고리
+   */
+  // 카테고리를 order 순서대로 가져오는 메서드
+  async findAllCategories() {
+    const categories = await this.categoryRepository.find({
+      order: {
+        order: 'ASC',
+      },
+    });
+    return categories;
+  }
+
+  // 카테고리 정보를 수정하는 메서드
+  async updateCategories(updateCategoriesDto: UpdateCategoryDto) {
+    // 기존 카테고리 가져오기
+    const existingCategories = await this.categoryRepository.find();
+    const existingCategoryNames = existingCategories.map(
+      (category) => category.name,
+    );
+    console.log({ existingCategoryNames });
+
+    const dtoCategoryNames = updateCategoriesDto.categories.map(
+      (dto) => dto.name,
+    );
+    console.log({ dtoCategoryNames });
+
+    for (const dto of updateCategoriesDto.categories) {
+      const categoryDto = plainToInstance(CategoryDto, dto);
+
+      if (
+        // 이미 존재하는 카테고리인지
+        categoryDto.name &&
+        existingCategoryNames.includes(categoryDto.name)
+      ) {
+        const category = existingCategories.find(
+          (c) => c.name === categoryDto.name,
+        );
+        category.name = categoryDto.name;
+        category.order = categoryDto.order;
+        await this.categoryRepository.save(category);
+      } else {
+        // 새로 추가된 카테고리인지
+        const newCategory = new Category();
+        newCategory.name = categoryDto.name;
+        newCategory.order = categoryDto.order;
+        await this.categoryRepository.save(newCategory);
+      }
+    }
+
+    // 삭제할 카테고리 찾기
+    const categoriesToDelete = existingCategoryNames.filter(
+      (existingId) => !dtoCategoryNames.includes(existingId),
+    );
+
+    if (categoriesToDelete.length > 0) {
+      await this.categoryRepository.delete(categoriesToDelete);
+    }
   }
 
   /**

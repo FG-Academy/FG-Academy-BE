@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -24,6 +25,7 @@ import { FeedbackDto } from './dto/feedback.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CopyCourseDto } from './dto/copy-course.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('admin')
 @Roles('admin', 'manager')
@@ -138,6 +140,21 @@ export class AdminController {
   async findAllCurriculums() {
     const result = await this.adminService.findAllCurriculums();
     return { data: result };
+  }
+
+  /**
+   * 카테고리 정보
+   */
+  // 카테고리를 order 순서대로 가져오는 API
+  @Get('/categories')
+  findAllCategories() {
+    return this.adminService.findAllCategories();
+  }
+
+  // 카테고리 수정 API
+  @Put('/categories')
+  updateCategory(@Body() updateCategoryDto: UpdateCategoryDto) {
+    return this.adminService.updateCategories(updateCategoryDto);
   }
 
   /**

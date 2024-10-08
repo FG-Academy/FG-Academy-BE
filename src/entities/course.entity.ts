@@ -1,7 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+} from 'typeorm';
 import { Lecture } from './lecture.entity';
 import { Announcement } from './announcement.entity';
 import { Enrollment } from './enrollment.entity';
+import { Category } from './category.entity';
 
 @Entity()
 export class Course {
@@ -56,4 +63,9 @@ export class Course {
     cascade: true,
   })
   enrollments: Enrollment[];
+
+  @ManyToOne(() => Category, (category) => category.courses, {
+    nullable: true,
+  })
+  category: Category;
 }

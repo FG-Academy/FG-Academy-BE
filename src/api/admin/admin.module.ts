@@ -12,6 +12,7 @@ import { Course } from 'src/entities/course.entity';
 import { Lecture } from 'src/entities/lecture.entity';
 import { Announcement } from 'src/entities/announcement.entity';
 import { Enrollment } from 'src/entities/enrollment.entity';
+import { Category } from 'src/entities/category.entity';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Enrollment } from 'src/entities/enrollment.entity';
       Lecture,
       Announcement,
       Enrollment,
+      Category,
     ]),
   ],
   controllers: [AdminController],

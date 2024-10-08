@@ -11,6 +11,7 @@ import { QuizAnswer } from '../entities/quizAnswer.entity';
 import { QuizSubmit } from '../entities/quizSubmit.entity';
 import { Question } from 'src/entities/question.entity';
 import { Answer } from 'src/entities/answer.entity';
+import { Category } from 'src/entities/category.entity';
 
 export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
   imports: [ConfigModule],
@@ -22,7 +23,7 @@ export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
     username: configService.get('DB_USER'),
     password: configService.get('DB_PASSWORD'),
     database: configService.get('DB_NAME'),
-    synchronize: false,
+    synchronize: true,
     logging: false,
     entities: [
       User,
@@ -36,6 +37,7 @@ export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
       QuizSubmit,
       Question,
       Answer,
+      Category,
     ],
     // entities: [__dirname + '/src/entities/*.ts'],
     // migrations: [__dirname + '/src/database/migrations/*.ts'],

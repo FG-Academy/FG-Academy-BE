@@ -28,12 +28,13 @@ export class DashboardService {
   async findAll(userId: number) {
     const userEnrollments = await this.enrollmentRepository.find({
       where: { user: { userId } },
-      relations: ['course'],
+      relations: ['course', 'course.category'],
     });
 
     const courseDetail = await Promise.all(
       userEnrollments.map(async (enrollment) => {
         const courseId = enrollment.course.courseId;
+        const category = enrollment.course.category;
 
         // 해당 코스에 속한 강의 총 개수
         const totalCourseLength = await this.lectureRepository.count({
@@ -61,6 +62,7 @@ export class DashboardService {
 
         return {
           courseId,
+          category,
           status: enrollment.course.status,
           title: enrollment.course.title,
           curriculum: enrollment.course.curriculum,

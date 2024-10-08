@@ -28,12 +28,14 @@ export class CoursesService {
   async findAll(): Promise<Course[]> {
     return await this.courseRepository.find({
       where: { status: 'active' },
-      order: { curriculum: 'ASC', title: 'ASC' },
+      relations: ['category'],
+      order: { category: { order: 'ASC' }, title: 'ASC' },
     });
   }
 
   async findOne(courseId: number) {
     return await this.courseRepository.findOne({
+      relations: ['category'],
       where: { courseId },
     });
   }
@@ -248,6 +250,7 @@ export class CoursesService {
         'lectures.quizzes',
         'lectures.quizzes.quizAnswers',
         'lectures.quizzes.quizSubmits',
+        'category',
         // 'lectures.lectureTimeRecords',
       ],
       order: {
