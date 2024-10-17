@@ -1,3 +1,4 @@
+---
 version: "3.8"
 
 services:
@@ -17,14 +18,14 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     environment:
-      - NODE_ENV=${NODE_ENV}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - EMAILADDRESS=${EMAILADDRESS}
-      - EMAILPASSWORD=${EMAILPASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      NODE_ENV=${NODE_ENV}
+      DB_HOST=${DB_HOST}
+      DB_USER=${DB_USER}
+      DB_PASSWORD=${DB_PASSWORD}
+      DB_NAME=${DB_NAME}
+      EMAILADDRESS=${EMAILADDRESS}
+      EMAILPASSWORD=${EMAILPASSWORD}
+      JWT_SECRET=${JWT_SECRET}
     volumes:
       - /FG-Academy-BE/public:/app/public
     expose:
