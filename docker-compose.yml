@@ -1,35 +1,67 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
     image: mysql:latest
     ports:
-      - '3306:3306'
+      - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=Rhcehdtksdkzkepal*
-      - MYSQL_DATABASE=fgacademydb
+      MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE=${MYSQL_DATABASE}
     volumes:
       - mysql-data:/var/lib/mysql
     restart: always
 
   app:
-    build: .
-    ports:
-      - '3000:3000'
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     environment:
-      - NODE_ENV=production
-      - DB_HOST=mysql
-      - DB_USER=root
-      - DB_PASSWORD=Rhcehdtksdkzkepal*
-      - DB_NAME=fgacademydb
-      - EMAILADDRESS=rkdckdfyyd@naver.com
-      - EMAILPASSWORD=spdlqjwhgdk3*
-      - JWT_SECRET=0dd8d1d7c673300e0e800e10e13eb6ee1414c140e046ebf7e2229010ab7ab79a10f06fddeebabfb428b6a380aa12654c
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - EMAILADDRESS=${EMAILADDRESS}
+      - EMAILPASSWORD=${EMAILPASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - /FG-Academy-BE/public:/app/public
+    expose:
+      - 8080
     depends_on:
       - mysql
     restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - app
+    expose:
+      - 3000
+    restart: always
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./FG-Academy-BE/public:/var/www/html
+      - ./FG-Academy-BE/log/directory:/var/log/nginx
+    depends_on:
+      - frontend
+      - app
+    restart: always
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
 volumes:
   mysql-data:
