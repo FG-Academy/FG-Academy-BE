@@ -1,12 +1,15 @@
-version: '3.8'
+---
+version: "3.8"
 
 services:
   mysql:
     image: mysql:latest
     ports:
-      - '3306:3306'
-    environment: MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE=${MYSQL_DATABASE}
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
     volumes:
       - mysql-data:/var/lib/mysql
     restart: always
@@ -16,14 +19,14 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     environment:
-      - NODE_ENV=${NODE_ENV}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - EMAILADDRESS=${EMAILADDRESS}
-      - EMAILPASSWORD=${EMAILPASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      NODE_ENV: ${NODE_ENV}
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      EMAILADDRESS: ${EMAILADDRESS}
+      EMAILPASSWORD: ${EMAILPASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - /FG-Academy-BE/public:/app/public
     expose:
