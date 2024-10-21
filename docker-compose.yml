@@ -9,6 +9,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
+
     volumes:
       - mysql-data:/var/lib/mysql
     restart: always
@@ -51,12 +52,12 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./FG-Academy-BE/public:/var/www/html
-      - ./FG-Academy-BE/log/directory:/var/log/nginx
+      # - ./FG-Academy-BE/log/directory:/var/log/nginx
     depends_on:
       - frontend
       - app
