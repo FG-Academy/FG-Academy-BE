@@ -7,6 +7,7 @@ import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import moment from 'moment-timezone';
 import { Quiz } from 'src/entities/quiz.entity';
+import { QuizSubmit } from 'src/entities/quizSubmit.entity';
 
 moment.tz.setDefault('Asia/Seoul');
 
@@ -21,6 +22,8 @@ export class CoursesService {
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(LectureTimeRecord)
     private readonly lectureTimeRecordRepository: Repository<LectureTimeRecord>,
+    @InjectRepository(QuizSubmit)
+    private readonly quizSubmitRepository: Repository<QuizSubmit>,
     @InjectRepository(Quiz)
     private quizRepository: Repository<Quiz>,
   ) {}
@@ -315,13 +318,59 @@ export class CoursesService {
           return quizSubmit.userId === userId;
         });
       });
-      // 각 lecture의 lectureTimeRecords 필터링
-      // lecture.lectureTimeRecords = lecture.lectureTimeRecords.filter(
-      //   (record) => {
-      //     return record.userId === userId;
-      //   },
-      // );
     });
+
+    return course;
+  }
+
+  async findAllLecturesByCourseId2(userId: number, courseId: number) {
+    // course, lectures, category 데이터만 우선 조회
+    const course = await this.courseRepository.findOne({
+      where: { courseId },
+      relations: ['lectures', 'category'],
+      order: {
+        lectures: {
+          lectureNumber: 'ASC',
+        },
+      },
+    });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    const lectureIds = course.lectures.map((lecture) => lecture.lectureId);
+
+    // 각 강의의 퀴즈와 관련된 데이터만 userId에 맞게 필터링하여 가져옴
+    const lecturesWithQuizzes = await this.lectureRepository.find({
+      where: { lectureId: In(lectureIds) },
+      relations: ['quizzes', 'quizzes.quizAnswers'],
+      order: {
+        quizzes: { quizIndex: 'ASC', quizAnswers: { itemIndex: 'ASC' } },
+      },
+    });
+
+    // 필터링된 quizSubmits만 가져오기 (userId에 맞게)
+    const quizzesWithFilteredSubmits = await this.quizSubmitRepository.find({
+      relations: ['quiz'],
+      where: {
+        quiz: { lecture: { lectureId: In(lectureIds) } },
+        userId: userId,
+      },
+    });
+    console.log(quizzesWithFilteredSubmits);
+
+    // lecture에 필터링된 quizSubmits를 매핑
+    lecturesWithQuizzes.forEach((lecture) => {
+      lecture.quizzes.forEach((quiz) => {
+        quiz.quizSubmits = quizzesWithFilteredSubmits.filter(
+          (quizSubmit) => quizSubmit.quiz.quizId === quiz.quizId,
+        );
+      });
+    });
+
+    // 필터링된 강의와 퀴즈 데이터를 course에 매핑
+    course.lectures = lecturesWithQuizzes;
 
     return course;
   }

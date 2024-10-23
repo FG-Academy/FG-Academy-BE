@@ -7,6 +7,7 @@ import { Lecture } from 'src/entities/lecture.entity';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
 import { Quiz } from 'src/entities/quiz.entity';
+import { QuizSubmit } from 'src/entities/quizSubmit.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Quiz } from 'src/entities/quiz.entity';
       Enrollment,
       LectureTimeRecord,
       Quiz,
+      QuizSubmit,
     ]),
   ],
   controllers: [CoursesController],

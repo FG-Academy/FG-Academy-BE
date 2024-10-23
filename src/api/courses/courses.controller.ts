@@ -59,7 +59,7 @@ export class CoursesController {
     @AuthUser('userId') userId: number,
     @Param('courseId') courseId: number,
   ) {
-    return this.coursesService.findAllLecturesByCourseId(userId, courseId);
+    return this.coursesService.findAllLecturesByCourseId2(userId, courseId);
   }
 
   @ApiOperation({ summary: '[강의 수강 화면] lectureTimeRecord 가져오기' })
