@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Course } from 'src/entities/course.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Lecture } from 'src/entities/lecture.entity';
 import { Enrollment } from 'src/entities/enrollment.entity';
 import { LectureTimeRecord } from 'src/entities/lectureTimeRecord.entity';
@@ -81,6 +81,48 @@ export class CoursesService {
     const lectureProgresses = lectures.map((lecture) => {
       const progress = lecture.lectureTimeRecords.find(
         (lp) => lp.userId === userId,
+      );
+
+      return {
+        lectureId: lecture.lectureId,
+        lectureNumber: lecture.lectureNumber,
+        completed: progress ? progress.status : false,
+        progress: progress ? progress.playTime : 0,
+      };
+    });
+
+    const completedCount = lectureProgresses.filter(
+      (lp) => lp.completed,
+    ).length;
+
+    return {
+      lectureProgresses,
+      completedCount,
+    };
+  }
+
+  async getLecturesProgress2(courseId: number, userId: number) {
+    // 강의 목록만 먼저 가져오기
+    const lectures = await this.lectureRepository.find({
+      where: { course: { courseId } },
+      select: ['lectureId', 'lectureNumber'], // 필요한 필드만 가져오기
+    });
+
+    // 각 강의에 대한 진행 상황을 별도로 가져오기
+    const lectureIds = lectures.map((lecture) => lecture.lectureId);
+
+    // LectureTimeRecords에서 userId에 해당하는 레코드만 가져오기
+    const lectureTimeRecords = await this.lectureTimeRecordRepository.find({
+      where: {
+        lectureId: In(lectureIds),
+        userId: userId,
+      },
+    });
+
+    // 필요시 다른 테이블도 비슷한 방식으로 진행
+    const lectureProgresses = lectures.map((lecture) => {
+      const progress = lectureTimeRecords.find(
+        (lp) => lp.lectureId === lecture.lectureId,
       );
 
       return {

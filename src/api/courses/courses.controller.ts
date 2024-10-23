@@ -35,7 +35,7 @@ export class CoursesController {
     @Param('courseId') courseId: number,
     @AuthUser('userId') userId: number,
   ) {
-    return this.coursesService.getLecturesProgress(courseId, userId);
+    return this.coursesService.getLecturesProgress2(courseId, userId);
   }
 
   @Post(':courseId/enrollment')
