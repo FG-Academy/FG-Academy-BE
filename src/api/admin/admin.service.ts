@@ -344,13 +344,18 @@ export class AdminService {
   async findAll(): Promise<Course[]> {
     // 모든 코스를 가져옵니다.
     const courses = await this.courseRepository.find({
-      relations: ['enrollments', 'category'],
+      relations: ['category'], // enrollments는 제외합니다.
     });
 
-    // 각 코스별로 수강 인원 수를 계산합니다.
+    // 각 코스별로 수강 인원 수와 퀴즈 타입별 갯수를 계산합니다.
     for (const course of courses) {
-      // enrollments 관계를 통해 수강 인원 수를 세고 새 속성에 할당합니다.
-      course['enrollmentCount'] = course.enrollments.length;
+      // enrollmentRepository를 사용하여 각 코스의 수강 인원 수를 가져옵니다.
+      const enrollmentCount = await this.enrollmentRepository.count({
+        where: {
+          course: { courseId: course.courseId },
+        },
+      });
+      course['enrollmentCount'] = enrollmentCount;
 
       // 퀴즈 타입별 갯수를 계산합니다.
       const multipleChoiceCount = await this.quizRepository.count({

@@ -350,6 +350,7 @@ export class CoursesService {
         'quiz.quizId', // quizId 가져오기
         'quiz.quizType', // quizType 가져오기
         'lecture.lectureId', // lectureId 가져오기
+        'lecture.videoLink', // lectureId 가져오기
       ])
       .orderBy('quiz.quizId', 'ASC')
       .getMany();
@@ -365,7 +366,7 @@ export class CoursesService {
       // .select(['quizId']) // quizId만 선택
       .getMany();
 
-    console.log(quizSubmits);
+    // console.log(quizSubmits);
 
     // 제출 여부 확인 및 새로운 객체 생성
     const lecturesWithQuizzes = course.lectures.map((lecture) => {
@@ -383,6 +384,7 @@ export class CoursesService {
         lectureId: lecture.lectureId,
         lectureNumber: lecture.lectureNumber,
         lectureTitle: lecture.title,
+        videoLink: lecture.videoLink,
         quizzes: filteredQuizzes, // 새롭게 정의된 퀴즈 정보
       };
     });
