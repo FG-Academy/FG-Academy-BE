@@ -29,9 +29,27 @@ export class QuizzesService {
       )
       .where('quiz.lectureId = :lectureId', { lectureId })
       .orderBy('quiz.quizId', 'ASC')
-      .addOrderBy('quizAnswer.id', 'ASC')
+      .addOrderBy('quizAnswer.itemIndex', 'ASC')
       .getMany();
     // console.log(quizzes);
+
+    return quizzes;
+  }
+
+  async findQuizById(quizId: number, userId: number) {
+    const quizzes = await this.quizRepository
+      .createQueryBuilder('quiz')
+      .leftJoinAndSelect('quiz.quizAnswers', 'quizAnswer')
+      .leftJoinAndSelect(
+        'quiz.quizSubmits',
+        'quizSubmit',
+        'quizSubmit.userId = :userId',
+        { userId },
+      )
+      .where('quiz.quizId = :quizId', { quizId })
+      .orderBy('quiz.quizId', 'ASC')
+      .addOrderBy('quizAnswer.itemIndex', 'ASC')
+      .getOneOrFail();
 
     return quizzes;
   }

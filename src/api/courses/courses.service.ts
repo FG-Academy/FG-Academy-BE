@@ -341,38 +341,56 @@ export class CoursesService {
 
     const lectureIds = course.lectures.map((lecture) => lecture.lectureId);
 
-    // 각 강의의 퀴즈와 관련된 데이터만 userId에 맞게 필터링하여 가져옴
-    const lecturesWithQuizzes = await this.lectureRepository.find({
-      where: { lectureId: In(lectureIds) },
-      relations: ['quizzes', 'quizzes.quizAnswers'],
-      order: {
-        quizzes: { quizIndex: 'ASC', quizAnswers: { itemIndex: 'ASC' } },
-      },
+    // QueryBuilder를 사용하여 lectureId 포함한 퀴즈 정보 가져오기
+    const quizzes = await this.quizRepository
+      .createQueryBuilder('quiz')
+      .leftJoinAndSelect('quiz.lecture', 'lecture')
+      .where('quiz.lectureId IN (:...lectureIds)', { lectureIds })
+      .select([
+        'quiz.quizId', // quizId 가져오기
+        'quiz.quizType', // quizType 가져오기
+        'lecture.lectureId', // lectureId 가져오기
+      ])
+      .orderBy('quiz.quizId', 'ASC')
+      .getMany();
+
+    // QueryBuilder를 사용하여 quizId와 userId를 기반으로 제출 여부 확인
+    const quizSubmits = await this.quizSubmitRepository
+      .createQueryBuilder('quizSubmit')
+      .leftJoinAndSelect('quizSubmit.quiz', 'quiz')
+      .where('quizSubmit.quizId IN (:...quizIds)', {
+        quizIds: quizzes.map((quiz) => quiz.quizId),
+      })
+      .andWhere('quizSubmit.userId = :userId', { userId })
+      // .select(['quizId']) // quizId만 선택
+      .getMany();
+
+    console.log(quizSubmits);
+
+    // 제출 여부 확인 및 새로운 객체 생성
+    const lecturesWithQuizzes = course.lectures.map((lecture) => {
+      const filteredQuizzes = quizzes
+        .filter((quiz) => quiz.lecture.lectureId === lecture.lectureId)
+        .map((quiz) => ({
+          quizId: quiz.quizId,
+          quizType: quiz.quizType,
+          submitted: quizSubmits.some(
+            (submit) => submit.quiz.quizId === quiz.quizId,
+          ),
+        }));
+
+      return {
+        lectureId: lecture.lectureId,
+        lectureNumber: lecture.lectureNumber,
+        lectureTitle: lecture.title,
+        quizzes: filteredQuizzes, // 새롭게 정의된 퀴즈 정보
+      };
     });
 
-    // 필터링된 quizSubmits만 가져오기 (userId에 맞게)
-    const quizzesWithFilteredSubmits = await this.quizSubmitRepository.find({
-      relations: ['quiz'],
-      where: {
-        quiz: { lecture: { lectureId: In(lectureIds) } },
-        userId: userId,
-      },
-    });
-    console.log(quizzesWithFilteredSubmits);
-
-    // lecture에 필터링된 quizSubmits를 매핑
-    lecturesWithQuizzes.forEach((lecture) => {
-      lecture.quizzes.forEach((quiz) => {
-        quiz.quizSubmits = quizzesWithFilteredSubmits.filter(
-          (quizSubmit) => quizSubmit.quiz.quizId === quiz.quizId,
-        );
-      });
-    });
-
-    // 필터링된 강의와 퀴즈 데이터를 course에 매핑
-    course.lectures = lecturesWithQuizzes;
-
-    return course;
+    return {
+      ...course,
+      lectures: lecturesWithQuizzes, // 퀴즈 정보가 추가된 lectures를 포함
+    };
   }
 
   async getLectureRecords(lectureId: number, userId: number) {

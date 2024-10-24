@@ -269,7 +269,7 @@ export class AdminService {
               (submit) => submit.status === 1,
             ).length;
 
-            console.log('last', lastSubmit);
+            // console.log('last', lastSubmit);
 
             return {
               quizId: quiz.quizId,
@@ -532,7 +532,7 @@ export class AdminService {
     if (!course) {
       throw new Error('Course not found');
     }
-    console.log(updateCourseDto);
+    // console.log(updateCourseDto);
 
     course.courseId = courseId;
     course.title = updateCourseDto.title ?? course.title;
@@ -546,7 +546,7 @@ export class AdminService {
     if (filepath) {
       course.thumbnailImagePath = filepath;
     }
-    console.log(course);
+    // console.log(course);
 
     await this.courseRepository.update({ courseId }, course); // Save the course with all changes
   }
@@ -661,12 +661,10 @@ export class AdminService {
     const existingCategoryNames = existingCategories.map(
       (category) => category.name,
     );
-    console.log({ existingCategoryNames });
 
     const dtoCategoryNames = updateCategoriesDto.categories.map(
       (dto) => dto.name,
     );
-    console.log({ dtoCategoryNames });
 
     for (const dto of updateCategoriesDto.categories) {
       const categoryDto = plainToInstance(CategoryDto, dto);

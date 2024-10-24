@@ -19,6 +19,17 @@ export class QuizzesController {
     return this.quizzesService.findAllLectureQuiz(lectureId, userId);
   }
 
+  @ApiOperation({
+    summary: '[관리자 화면 | 강의 수강 화면] 퀴즈 조회',
+  })
+  @Get('/:quizId')
+  findGetQuizById(
+    @Param('quizId') quizId: number,
+    @AuthUser('userId') userId: number,
+  ) {
+    return this.quizzesService.findQuizById(quizId, userId);
+  }
+
   @Post('answer')
   saveUserQuizAnswer(
     @AuthUser('userId') userId: number,
