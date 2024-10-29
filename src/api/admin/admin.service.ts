@@ -51,8 +51,75 @@ export class AdminService {
   ) {}
 
   /** 유저 정보 */
-  async findAllUsers() {
-    const users = await this.usersRepository.find();
+  // async findAllUsers() {
+  //   const users = await this.usersRepository.find();
+  //   const usersForResponse = users.map((user) => {
+  //     const userPlain = instanceToPlain(user);
+
+  //     const departmentLabel =
+  //       departments.find((dept) => dept.value === user.departmentName)?.label ||
+  //       'N/A';
+  //     const positionLabel =
+  //       positions.find((pos) => pos.value === user.position)?.label || 'N/A';
+
+  //     return {
+  //       ...userPlain,
+  //       departmentLabel,
+  //       positionLabel,
+  //     };
+  //   });
+
+  //   return usersForResponse;
+  // }
+
+  async findAllUsers({
+    page,
+    size,
+    sortBy,
+    level,
+    church,
+    position,
+    department,
+    name,
+  }) {
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+    if (sortBy === '') {
+      sortBy = 'name';
+    }
+
+    // 필터링 조건 추가
+    if (level) queryBuilder.andWhere('user.level = :level', { level });
+    if (church) queryBuilder.andWhere('user.churchName = :church', { church });
+    if (position)
+      queryBuilder.andWhere('user.position = :position', { position });
+    if (department)
+      queryBuilder.andWhere('user.departmentName = :department', {
+        department,
+      });
+    if (name)
+      queryBuilder.andWhere('user.name LIKE :name', { name: `%${name}%` });
+
+    // 전체 유저 수
+    const totalElements = await queryBuilder.getCount();
+
+    // 정렬 조건 추가
+    if (sortBy === 'name') {
+      queryBuilder.orderBy('user.name', 'ASC');
+    } else if (sortBy === 'createdAt') {
+      queryBuilder.orderBy('user.createdAt', 'DESC');
+    } else if (sortBy === 'yearOfService') {
+      queryBuilder.orderBy('user.yearOfService', 'ASC');
+    }
+
+    // 페이지네이션 적용
+    queryBuilder.skip((page - 1) * size).take(size);
+    const users = await queryBuilder.getMany();
+
+    // 페이지네이션 정보 계산
+    const totalPages = Math.ceil(totalElements / size);
+    const currentPage = page;
+
+    // 응답 데이터 포맷팅
     const usersForResponse = users.map((user) => {
       const userPlain = instanceToPlain(user);
 
@@ -69,7 +136,15 @@ export class AdminService {
       };
     });
 
-    return usersForResponse;
+    return {
+      result: {
+        currentPage,
+        totalPages,
+        totalElements,
+        size,
+        content: usersForResponse,
+      },
+    };
   }
 
   async findUserById(userId: number) {
@@ -649,7 +724,6 @@ export class AdminService {
   /**
    * 카테고리
    */
-  // 카테고리를 order 순서대로 가져오는 메서드
   async findAllCategories() {
     const categories = await this.categoryRepository.find({
       order: {
@@ -707,36 +781,96 @@ export class AdminService {
   /**
    * 퀴즈 정보
    */
-  async findQuizAll() {
-    const submittedQuiz = await this.quizSubmitRepository.find({
-      relations: ['user', 'quiz', 'quiz.lecture', 'quiz.lecture.course'],
-      where: {
-        quiz: {
-          lecture: {
-            status: 'active',
-          },
-        },
-      },
-    });
+  async findQuizAll({
+    page,
+    size,
+    orderBy,
+    name,
+    position,
+    departmentName,
+    courseTitle,
+    quizType,
+    answerStatus,
+    userDepartment,
+    userLevel,
+  }) {
+    const statusMap = new Map([
+      ['정답', 1],
+      ['미채점', 0],
+      ['오답', 2],
+    ]);
+    const statusCode = statusMap.get(answerStatus);
 
-    // 유저별 동일한 quizId에 대해 가장 최근의 제출만 추적
-    const latestQuizMap = new Map();
+    const subquery = `
+    SELECT MAX(qs.id) AS latestId
+    FROM quiz_submit qs
+    GROUP BY qs.userId, qs.quizId
+  `;
 
-    submittedQuiz.forEach((sq) => {
-      const key = `${sq.user.userId}-${sq.quiz.quizId}`;
-      if (
-        !latestQuizMap.has(key) ||
-        latestQuizMap.get(key).createdAt < sq.createdAt
-      ) {
-        latestQuizMap.set(key, sq);
-      }
-    });
+    const latestQuizSubmissions = this.quizSubmitRepository
+      .createQueryBuilder('quizSubmit')
+      .innerJoin(`(${subquery})`, 'latest', 'quizSubmit.id = latest.latestId')
+      .leftJoinAndSelect('quizSubmit.user', 'user')
+      .leftJoinAndSelect('quizSubmit.quiz', 'quiz')
+      .leftJoinAndSelect('quiz.lecture', 'lecture')
+      .leftJoinAndSelect('lecture.course', 'course')
+      .where('lecture.status = :status', { status: 'active' });
 
-    // 최신 퀴즈만 포함된 배열로 변환
-    const latestQuizzes = Array.from(latestQuizMap.values());
+    if (userLevel === 'tutor' && userDepartment) {
+      latestQuizSubmissions.andWhere('user.departmentName = :userDepartment', {
+        userDepartment,
+      });
+    }
 
-    // 데이터를 원하는 형식으로 매핑
-    const mappedData = latestQuizzes.map((sq) => {
+    // 필터링 조건
+    if (statusCode !== undefined)
+      latestQuizSubmissions.andWhere('quizSubmit.status = :statusCode', {
+        statusCode,
+      });
+    if (name && name !== '')
+      latestQuizSubmissions.andWhere('user.name LIKE :name', {
+        name: `%${name}%`,
+      });
+    if (position && position !== '')
+      latestQuizSubmissions.andWhere('user.position = :position', { position });
+    if (departmentName && departmentName !== '')
+      latestQuizSubmissions.andWhere('user.departmentName = :departmentName', {
+        departmentName,
+      });
+    if (courseTitle && courseTitle !== '')
+      latestQuizSubmissions.andWhere('course.title LIKE :courseTitle', {
+        courseTitle: `%${courseTitle}%`,
+      });
+    if (quizType && quizType !== '')
+      latestQuizSubmissions.andWhere('quizSubmit.multipleAnswer = :quizType', {
+        quizType: quizType === '객관식' ? 1 : 0,
+      });
+
+    // if (answerStatus && answerStatus !== '') {
+    //   console.log('hi', answerStatus);
+    //   const statusMap = { 정답: 1, 미채점: 0, 오답: 2 };
+    //   latestQuizSubmissions.andWhere('quizSubmit.status = :status', {
+    //     status: statusMap[answerStatus],
+    //   });
+    //   console.log(statusMap[answerStatus]);
+    // }
+    // 정렬 조건
+    latestQuizSubmissions.orderBy(
+      'quizSubmit.createdAt',
+      orderBy === 'newest' ? 'DESC' : 'ASC',
+    );
+
+    // 전체 개수 구하기
+    const totalElements = await latestQuizSubmissions.getCount();
+
+    // 페이지네이션 적용
+    latestQuizSubmissions.skip((page - 1) * size).take(size);
+
+    // 결과 가져오기
+    const submittedQuiz = await latestQuizSubmissions.getMany();
+
+    // 데이터를 매핑하여 응답 형식으로 변환
+    const mappedData = submittedQuiz.map((sq) => {
       const departmentLabel =
         departments.find((dept) => dept.value === sq.user.departmentName)
           ?.label || 'N/A';
@@ -761,7 +895,19 @@ export class AdminService {
       };
     });
 
-    return instanceToPlain(mappedData);
+    // 응답 형식으로 반환
+    const totalPages = Math.ceil(totalElements / size);
+    const currentPage = page;
+
+    return {
+      result: {
+        currentPage,
+        totalPages,
+        totalElements,
+        size,
+        content: mappedData,
+      },
+    };
   }
 
   async feedbackQuiz(

@@ -4,9 +4,11 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UseInterceptors,
 } from '@nestjs/common';
@@ -36,10 +38,34 @@ export class AdminController {
   /**
    * 유저 정보
    */
+  // @ApiOperation({ summary: '[관리자 화면-유저] 전체 유저 가져오기' })
+  // @Get('/users')
+  // findAllUsers() {
+  //   return this.adminService.findAllUsers();
+  // }
+
   @ApiOperation({ summary: '[관리자 화면-유저] 전체 유저 가져오기' })
   @Get('/users')
-  findAllUsers() {
-    return this.adminService.findAllUsers();
+  findAllUsers(
+    @Query('page', ParseIntPipe) page: number = 1,
+    @Query('size', ParseIntPipe) size: number = 10,
+    @Query('sortBy') sortBy: 'name' | 'createdAt' | 'yearOfService' = 'name',
+    @Query('level') level?: string,
+    @Query('church') church?: string,
+    @Query('position') position?: string,
+    @Query('department') department?: string,
+    @Query('name') name?: string,
+  ) {
+    return this.adminService.findAllUsers({
+      page,
+      size,
+      sortBy,
+      level,
+      church,
+      position,
+      department,
+      name,
+    });
   }
 
   @ApiOperation({ summary: '[관리자 화면-유저] 한 유저 정보 가져오기' })
@@ -163,8 +189,32 @@ export class AdminController {
   @Roles('admin', 'tutor', 'manager')
   @ApiOperation({ summary: '[관리자 화면-퀴즈] 모든 제출된 퀴즈 가져오기' })
   @Get('quizzes')
-  async findQuizData() {
-    return await this.adminService.findQuizAll();
+  async findQuizData(
+    @Query('page') page: number = 1,
+    @Query('size') size: number = 10,
+    @Query('orderBy') orderBy: 'newest' | 'oldest' = 'newest',
+    @Query('userDepartment') userDepartment: string,
+    @Query('userLevel') userLevel: 'admin' | 'tutor' = 'admin',
+    @Query('name') name?: string,
+    @Query('position') position?: string,
+    @Query('department') departmentName?: string,
+    @Query('courseTitle') courseTitle?: string,
+    @Query('quizType') quizType?: '객관식' | '주관식',
+    @Query('answerStatus') answerStatus?: string,
+  ) {
+    return await this.adminService.findQuizAll({
+      page,
+      size,
+      orderBy,
+      name,
+      position,
+      departmentName,
+      courseTitle,
+      quizType,
+      answerStatus,
+      userDepartment,
+      userLevel,
+    });
   }
 
   @Roles('admin', 'tutor', 'manager')
