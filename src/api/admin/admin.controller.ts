@@ -30,7 +30,7 @@ import { CopyCourseDto } from './dto/copy-course.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('admin')
-@Roles('admin', 'manager')
+@Roles('admin', 'manager', 'tutor')
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -95,6 +95,12 @@ export class AdminController {
     @Param('userId') userId: number,
   ) {
     return await this.adminService.updateDB(dto, userId);
+  }
+
+  @Delete('/users/:userId')
+  async deleteUserById(@Param('userId') userId: number) {
+    await this.adminService.deleteUser(userId);
+    return { message: '유저를 성공적으로 삭제하였습니다' };
   }
 
   /**

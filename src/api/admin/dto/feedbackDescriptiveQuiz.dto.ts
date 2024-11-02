@@ -1,7 +1,7 @@
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 export class FeedbackDescriptiveQuiz {
-  @IsString()
+  @IsOptional()
   feedbackComment: string;
 
   @IsBoolean()

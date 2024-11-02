@@ -415,6 +415,12 @@ export class AdminService {
     return { message: 'Successfully update user info.' };
   }
 
+  async deleteUser(userId: number) {
+    await this.usersRepository.delete({
+      userId,
+    });
+  }
+
   /** 코스 정보 */
   async findAll(): Promise<Course[]> {
     // 모든 코스를 가져옵니다.

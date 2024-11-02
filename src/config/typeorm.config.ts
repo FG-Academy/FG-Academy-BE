@@ -40,9 +40,10 @@ export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
       Category,
     ],
     // entities: [__dirname + '/src/entities/*.ts'],
-    // migrations: [__dirname + '/src/database/migrations/*.ts'],
-    // cli: {
-    //   migrationsDir: 'src/database/migrations', // migration 파일을 생성할 디렉토리
-    // },
+    migrationsRun: false,
+    migrations: [__dirname + '/src/database/migrations/*.ts'],
+    cli: {
+      migrationsDir: 'src/database/migrations', // migration 파일을 생성할 디렉토리
+    },
   }),
 };
