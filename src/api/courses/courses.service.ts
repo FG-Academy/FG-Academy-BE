@@ -355,6 +355,19 @@ export class CoursesService {
       .orderBy('quiz.quizId', 'ASC')
       .getMany();
 
+    if (quizzes.length === 0) {
+      return {
+        ...course,
+        lectures: course.lectures.map((lecture) => ({
+          lectureId: lecture.lectureId,
+          lectureNumber: lecture.lectureNumber,
+          lectureTitle: lecture.title,
+          videoLink: lecture.videoLink,
+          quizzes: [],
+        })),
+      };
+    }
+
     // QueryBuilder를 사용하여 quizId와 userId를 기반으로 제출 여부 확인
     const quizSubmits = await this.quizSubmitRepository
       .createQueryBuilder('quizSubmit')
@@ -363,10 +376,7 @@ export class CoursesService {
         quizIds: quizzes.map((quiz) => quiz.quizId),
       })
       .andWhere('quizSubmit.userId = :userId', { userId })
-      // .select(['quizId']) // quizId만 선택
       .getMany();
-
-    // console.log(quizSubmits);
 
     // 제출 여부 확인 및 새로운 객체 생성
     const lecturesWithQuizzes = course.lectures.map((lecture) => {
