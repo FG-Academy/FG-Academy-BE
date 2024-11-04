@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Quiz } from 'src/entities/quiz.entity';
 import { QuizSubmit } from 'src/entities/quizSubmit.entity';
 import { CreateQuizAnswerDto } from './dto/create-quizAnswer.dto';
@@ -15,6 +15,7 @@ export class QuizzesService {
     private readonly quizSubmitRepository: Repository<QuizSubmit>,
     @InjectRepository(QuizAnswer)
     private readonly quizAnswerRepository: Repository<QuizAnswer>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAllLectureQuiz(lectureId: number, userId: number): Promise<Quiz[]> {
@@ -55,6 +56,12 @@ export class QuizzesService {
   }
 
   async saveUserAnswer(userId: number, data: CreateQuizAnswerDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    // 트랜잭션 시작
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     const multipleQuiz = await this.quizSubmitRepository.find({
       where: {
         user: { userId: userId }, // userId를 사용하여 user 엔티티와 매칭
@@ -123,7 +130,8 @@ export class QuizzesService {
           answer: data.answer,
           status: isCorrect ? 1 : 2, // 정답이면 1, 오답이면 2로 상태 설정
         });
-        await this.quizSubmitRepository.save(quizSubmit);
+        // await this.quizSubmitRepository.save(quizSubmit);
+        await queryRunner.manager.save(quizSubmit);
       } else if (!descriptiveQuiz) {
         const descriptiveAnswer = this.quizSubmitRepository.create({
           user: { userId },
@@ -132,9 +140,11 @@ export class QuizzesService {
           answer: data.answer,
           status: 0,
         });
-        await this.quizSubmitRepository.save(descriptiveAnswer);
+        // await this.quizSubmitRepository.save(descriptiveAnswer);
+        await queryRunner.manager.save(descriptiveAnswer);
       } else {
-        await this.quizSubmitRepository.update(
+        await queryRunner.manager.update(
+          QuizSubmit,
           {
             user: { userId },
             quiz: { quizId: data.quizId },
@@ -145,9 +155,14 @@ export class QuizzesService {
           },
         );
       }
+      await queryRunner.commitTransaction();
       return { message: '퀴즈가 성공적으로 제출되었습니다.' };
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       throw error;
+    } finally {
+      // 연결 해제
+      await queryRunner.release();
     }
   }
 }
