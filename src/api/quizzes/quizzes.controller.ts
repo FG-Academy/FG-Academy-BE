@@ -19,6 +19,26 @@ export class QuizzesController {
     return this.quizzesService.findAllLectureQuiz(lectureId, userId);
   }
 
+  // /api/v1/quizzes/me/courses
+  @ApiOperation({
+    summary: '[내 강의 | 퀴즈] 강의 목록 가져오기',
+  })
+  @Get('me/courses')
+  findMyCourses(@AuthUser('userId') userId: number) {
+    return this.quizzesService.findMyCoursesByQuiz(userId);
+  }
+
+  @ApiOperation({
+    summary: '[내 강의] 강의 별 내 퀴즈 가져오기',
+  })
+  @Get('me/courses/:courseId')
+  findMyQuizzes(
+    @AuthUser('userId') userId: number,
+    @Param('courseId') courseId: number,
+  ) {
+    return this.quizzesService.findMyQuizzes(userId, courseId);
+  }
+
   @ApiOperation({
     summary: '[관리자 화면 | 강의 수강 화면] 퀴즈 조회',
   })
