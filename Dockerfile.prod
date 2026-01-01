@@ -1,14 +1,21 @@
 # Build stage
 FROM node:20.4.0-alpine3.18 AS build
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM node:20.4.0-alpine3.18 AS production
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # 환경변수를 production으로 설정
 ENV NODE_ENV=production
@@ -16,8 +23,8 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 # Production dependencies만 설치
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 # 빌드한 파일을 복사
 COPY --from=build /app/dist ./dist
@@ -25,4 +32,4 @@ COPY --from=build /app/dist ./dist
 EXPOSE 3000
 
 # Production 모드로 앱 시작
-CMD ["npm", "run", "start:prod"]
+CMD ["pnpm", "run", "start:prod"]

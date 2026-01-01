@@ -70,6 +70,9 @@ export class User {
   })
   updatedAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt: Date;
+
   @OneToMany(() => QuizSubmit, (quizSubmit) => quizSubmit.user, {
     cascade: true,
   })

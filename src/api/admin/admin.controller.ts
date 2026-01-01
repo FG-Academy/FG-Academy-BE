@@ -9,15 +9,11 @@ import {
   Post,
   Put,
   Query,
-  Req,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { UpdateLecturesDto } from './dto/update-lectures.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import { FileUploadInterceptor } from './interceptor/fileUploadInterceptor';
 import { Roles } from '../users/decorators/role.decorator';
-import { Request } from 'express';
 import { FeedbackDescriptiveQuiz } from './dto/feedbackDescriptiveQuiz.dto';
 import { CreateQuizDto } from './dto/create-new-quiz.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -113,10 +109,8 @@ export class AdminController {
   }
 
   @Post('/courses')
-  @UseInterceptors(FileUploadInterceptor)
-  createCourse(@Body() createCourseDto: CreateCourseDto, @Req() req: Request) {
-    const filepath = req['filepath']; // 파일 경로 접근
-    return this.adminService.createCourse(createCourseDto, filepath);
+  createCourse(@Body() createCourseDto: CreateCourseDto) {
+    return this.adminService.createCourse(createCourseDto);
   }
 
   @Delete('/courses')
@@ -140,14 +134,11 @@ export class AdminController {
   }
 
   @Patch('/courses/:courseId')
-  @UseInterceptors(FileUploadInterceptor)
   async create(
     @Param('courseId') courseId: number,
     @Body() updateCourseDto: UpdateCourseDto,
-    @Req() req: Request,
   ) {
-    const filepath = req['filepath']; // 파일 경로 접근
-    await this.adminService.updateCourse(courseId, updateCourseDto, filepath);
+    await this.adminService.updateCourse(courseId, updateCourseDto);
     return { message: 'Course updated successfully' };
   }
 

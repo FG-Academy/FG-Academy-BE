@@ -464,9 +464,9 @@ export class AdminService {
     return courses;
   }
 
-  async createCourse(createCourseDto: CreateCourseDto, filepath: string) {
+  async createCourse(createCourseDto: CreateCourseDto) {
     const newCourseData = this.courseRepository.create({
-      thumbnailImagePath: filepath,
+      thumbnailImagePath: createCourseDto.thumbnailImagePath,
       category: {
         name: createCourseDto.curriculum,
       },
@@ -603,11 +603,7 @@ export class AdminService {
     return course;
   }
 
-  async updateCourse(
-    courseId: number,
-    updateCourseDto: UpdateCourseDto,
-    filepath: string | undefined,
-  ) {
+  async updateCourse(courseId: number, updateCourseDto: UpdateCourseDto) {
     const course = await this.courseRepository.findOne({
       where: {
         courseId,
@@ -629,8 +625,8 @@ export class AdminService {
     course.category.name = updateCourseDto.curriculum ?? course.category.name;
     course.openDate = updateCourseDto.openDate ?? course.openDate;
     course.finishDate = updateCourseDto.finishDate ?? course.finishDate;
-    if (filepath) {
-      course.thumbnailImagePath = filepath;
+    if (updateCourseDto.thumbnailImagePath) {
+      course.thumbnailImagePath = updateCourseDto.thumbnailImagePath;
     }
     // console.log(course);
 

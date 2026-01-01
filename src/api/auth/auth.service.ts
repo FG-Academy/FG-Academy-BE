@@ -57,6 +57,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid username or password');
     }
 
+    await this.usersService.updateLastLoginAt(user.userId);
+
     const payload: JwtPayload = {
       sub: user.userId,
       name: user.name,

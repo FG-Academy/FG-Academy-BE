@@ -99,6 +99,10 @@ export class UsersService {
     return user;
   }
 
+  async updateLastLoginAt(userId: number): Promise<void> {
+    await this.usersRepository.update({ userId }, { lastLoginAt: new Date() });
+  }
+
   async findOne(where: FindOneOptions<User>) {
     const user = await this.usersRepository.findOne(where);
 

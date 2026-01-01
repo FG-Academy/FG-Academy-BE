@@ -1,14 +1,17 @@
 # Base stage for installing dependencies and building
 FROM node:20.4.0-alpine3.18 AS development
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package.json and pnpm-lock.yaml
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies including 'devDependencies'
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
 # Copy the rest of the application code
 COPY . .
@@ -17,4 +20,4 @@ COPY . .
 EXPOSE 8080
 
 # Start the application
-CMD ["npm", "run", "start:dev"]
+CMD ["pnpm", "run", "start:dev"]
