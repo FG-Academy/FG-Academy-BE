@@ -26,12 +26,12 @@ import { Lecture } from 'src/entities/lecture.entity';
           host: 'smtp.gmail.com',
           port: 587,
           auth: {
-            user: process.env.EMAILADDRESS,
-            pass: process.env.EMAILPASSWORD,
+            user: process.env.EMAIL_ADDRESS,
+            pass: process.env.EMAIL_PASSWORD,
           },
         },
         defaults: {
-          from: `"꽃동산아카데미" ${process.env.EMAILADDRESS}`,
+          from: `"꽃동산아카데미" ${process.env.EMAIL_ADDRESS}`,
         },
       }),
     }),

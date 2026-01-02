@@ -7,7 +7,7 @@ import { JwtPayload } from '../interface/jwtPayload.interface';
 import { AuthService } from '../auth.service';
 
 const extractJwtFromCookie: JwtFromRequestFunction = (request: Request) => {
-  return request.cookies['refreshToken']!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  return request.cookies['refreshToken']!;
 };
 
 @Injectable()

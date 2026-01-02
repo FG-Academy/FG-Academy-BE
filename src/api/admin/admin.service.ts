@@ -487,7 +487,7 @@ export class AdminService {
       if (deleteResult.affected === 0) {
         throw new NotFoundException('존재하지 않는 코스입니다.');
       }
-    } catch (error) {
+    } catch {
       throw new NotFoundException('존재하지 않는 코스입니다.');
     }
   }
@@ -578,7 +578,7 @@ export class AdminService {
       );
 
       return newCourses;
-    } catch (error) {
+    } catch {
       throw new NotFoundException('코스 복사 중 오류가 발생했습니다.');
     }
   }
@@ -1012,7 +1012,6 @@ export class AdminService {
           correctQuizzes: 0,
         };
         courseMap.set(course.courseId, courseData);
-        courseData;
       }
       let lectureData = courseData.lectures.get(lecture.lectureId);
       if (!lectureData) {

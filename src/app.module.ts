@@ -7,7 +7,6 @@ import { TypeOrmConfig } from './config/typeorm.config';
 import { AuthModule } from './api/auth/auth.module';
 import { UsersModule } from './api/users/users.module';
 import { LoggerMiddleware } from './utils/logger.middleware';
-import { CacheModule } from '@nestjs/cache-manager';
 import { CoursesModule } from './api/courses/courses.module';
 import { NestjsFormDataModule, FileSystemStoredFile } from 'nestjs-form-data';
 import { QuizzesModule } from './api/quizzes/quizzes.module';
@@ -28,9 +27,6 @@ import { UploadModule } from './api/upload/upload.module';
     TypeOrmModule.forRootAsync(TypeOrmConfig),
     AuthModule,
     UsersModule,
-    CacheModule.register({
-      isGlobal: true,
-    }),
     CoursesModule,
     QuizzesModule,
     PostsModule,
