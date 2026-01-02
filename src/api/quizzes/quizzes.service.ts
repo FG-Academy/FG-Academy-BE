@@ -42,7 +42,6 @@ export class QuizzesService {
       .orderBy('quiz.quizId', 'ASC')
       .addOrderBy('quizAnswer.itemIndex', 'ASC')
       .getMany();
-    // console.log(quizzes);
 
     return quizzes;
   }

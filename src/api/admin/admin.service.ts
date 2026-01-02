@@ -196,7 +196,6 @@ export class AdminService {
           let lectureCorrectQuizCount = 0;
 
           const quizzes = lecture.quizzes.map((quiz) => {
-            // console.log(quiz);
             const userSubmits = quiz.quizSubmits.filter(
               (submit) => submit.userId === userId,
             );
@@ -231,7 +230,6 @@ export class AdminService {
             }
 
             totalQuizCount++;
-            // console.log(totalQuizCount);
 
             return {
               quizId: quiz.quizId,
@@ -314,14 +312,11 @@ export class AdminService {
         // Iterate through each quiz in the lecture
         const quizzes = await Promise.all(
           lecture.quizzes.map(async (quiz) => {
-            // console.log('quiz', quiz);
             // Fetch quizSubmits separately based on userId and quizId
             const quizSubmits = await this.quizSubmitRepository.find({
               where: { user: { userId }, quiz: { quizId: quiz.quizId } },
               order: { quiz: { quizSubmits: { createdAt: 'DESC' } } },
             });
-
-            // console.log('quizSubmits', quizSubmits);
 
             let lastSubmit = null;
             let answerType = '미채점';
@@ -343,8 +338,6 @@ export class AdminService {
             const correctCount = quizSubmits.filter(
               (submit) => submit.status === 1,
             ).length;
-
-            // console.log('last', lastSubmit);
 
             return {
               quizId: quiz.quizId,
@@ -614,7 +607,6 @@ export class AdminService {
     if (!course) {
       throw new Error('Course not found');
     }
-    // console.log(updateCourseDto);
 
     course.courseId = courseId;
     course.title = updateCourseDto.title ?? course.title;
@@ -628,7 +620,6 @@ export class AdminService {
     if (updateCourseDto.thumbnailImagePath) {
       course.thumbnailImagePath = updateCourseDto.thumbnailImagePath;
     }
-    // console.log(course);
 
     await this.courseRepository.update({ courseId }, course); // Save the course with all changes
   }
@@ -848,14 +839,6 @@ export class AdminService {
         quizType: quizType === '객관식' ? 1 : 0,
       });
 
-    // if (answerStatus && answerStatus !== '') {
-    //   console.log('hi', answerStatus);
-    //   const statusMap = { 정답: 1, 미채점: 0, 오답: 2 };
-    //   latestQuizSubmissions.andWhere('quizSubmit.status = :status', {
-    //     status: statusMap[answerStatus],
-    //   });
-    //   console.log(statusMap[answerStatus]);
-    // }
     // 정렬 조건
     latestQuizSubmissions.orderBy(
       'quizSubmit.createdAt',

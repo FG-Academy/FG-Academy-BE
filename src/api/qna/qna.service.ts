@@ -132,12 +132,10 @@ export class QnaService {
   }
 
   async findQuestionAnswerPost(questionId: number) {
-    console.log(questionId);
     const questionWithAnswers = await this.questionRepository.findOne({
       where: { questionId: questionId },
       relations: ['answers', 'answers.user', 'user'],
     });
-    console.log(questionWithAnswers);
     if (!questionWithAnswers) {
       throw new Error('삭제되었거나 존재하지 않는 게시글입니다.');
     }

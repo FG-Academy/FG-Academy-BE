@@ -32,7 +32,6 @@ export class AuthController {
   async findEmailExist(@Query('email') email: string) {
     const result = await this.authService.verifyAndSendEmail(email);
     if (!result) return false;
-    console.log(result);
     return { result };
   }
 
@@ -41,7 +40,6 @@ export class AuthController {
   @UseInterceptors(TokenInterceptor)
   @Post('sign-in')
   async signIn(@Body() signInDto: SignInDto) {
-    // console.log(signInDto);
     return await this.authService.signIn(signInDto);
   }
 

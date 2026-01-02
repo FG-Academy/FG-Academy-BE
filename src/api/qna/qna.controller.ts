@@ -59,7 +59,6 @@ export class QnaController {
     @Body() createAnswerDto: CreateAnswerDto,
     @Query('questionId') questionId: number,
   ) {
-    console.log(questionId);
     return this.qnaService.createAnswerPost(
       userId,
       createAnswerDto,
@@ -95,7 +94,6 @@ export class QnaController {
     @AuthUser() user,
     @Query('questionId') questionId: number,
   ) {
-    console.log(user);
     return this.qnaService.findQuestionAnswerPost(questionId);
   }
 }

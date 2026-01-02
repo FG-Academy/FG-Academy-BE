@@ -1,15 +1,16 @@
 import {
   Entity,
-  // PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   JoinColumn,
   PrimaryColumn,
+  Index,
 } from 'typeorm';
 import { Lecture } from './lecture.entity';
 import { User } from './user.entity';
 
 @Entity()
+@Index('IDX_lecture_time_record_updated_at', ['updatedAt'])
 export class LectureTimeRecord {
   // @PrimaryGeneratedColumn()
   // id: number; // 복합 키 대신 단일 ID 사용
