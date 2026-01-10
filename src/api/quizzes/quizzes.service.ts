@@ -229,7 +229,28 @@ export class QuizzesService {
         .getMany();
     }
 
-    // 5. 데이터 구조화
+    // 5. 각 강의별 전체 퀴즈 수 가져오기
+    const lectureIds = lectures.map((lecture) => lecture.lectureId);
+    let quizCountByLecture = [];
+    if (lectureIds.length > 0) {
+      quizCountByLecture = await this.quizRepository
+        .createQueryBuilder('quiz')
+        .select('quiz.lectureId', 'lectureId')
+        .addSelect('COUNT(quiz.quizId)', 'quizCount')
+        .where('quiz.lectureId IN (:...lectureIds)', { lectureIds })
+        .groupBy('quiz.lectureId')
+        .getRawMany();
+    }
+
+    // 강의별 퀴즈 수 맵 생성
+    const quizCountMap = new Map(
+      quizCountByLecture.map((item) => [
+        item.lectureId,
+        parseInt(item.quizCount),
+      ]),
+    );
+
+    // 6. 데이터 구조화
     // 강의별로 퀴즈 제출 데이터 그룹핑
     const submitsByLecture = groupBy(
       quizSubmits,
@@ -247,6 +268,7 @@ export class QuizzesService {
       );
 
       const submittedQuizCount = Object.keys(submitsByQuiz).length;
+      const totalQuizCount = quizCountMap.get(lecture.lectureId) || 0;
 
       // 각 퀴즈별로 정답 여부 확인 (status가 1인 제출이 있으면 정답)
       const correctQuizCount = Object.values(submitsByQuiz).filter(
@@ -262,6 +284,7 @@ export class QuizzesService {
         courseId: lecture.courseId,
         submittedQuizCount,
         correctQuizCount,
+        totalQuizCount,
         correctRatio: Math.round(correctRatio * 100) / 100, // 소수점 2자리까지
       };
     });
@@ -306,6 +329,7 @@ export class QuizzesService {
           lectureTitle: lecture.lectureTitle,
           submittedQuizCount: lecture.submittedQuizCount,
           correctQuizCount: lecture.correctQuizCount,
+          totalQuizCount: lecture.totalQuizCount,
           correctRatio: lecture.correctRatio,
         })),
       };

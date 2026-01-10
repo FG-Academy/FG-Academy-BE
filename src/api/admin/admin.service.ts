@@ -309,10 +309,8 @@ export class AdminService {
 
     const lectureDetails = await Promise.all(
       lectures.map(async (lecture) => {
-        // Iterate through each quiz in the lecture
         const quizzes = await Promise.all(
           lecture.quizzes.map(async (quiz) => {
-            // Fetch quizSubmits separately based on userId and quizId
             const quizSubmits = await this.quizSubmitRepository.find({
               where: { user: { userId }, quiz: { quizId: quiz.quizId } },
               order: { quiz: { quizSubmits: { createdAt: 'DESC' } } },
