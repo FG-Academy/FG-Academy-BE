@@ -7,7 +7,7 @@ on:
 env:
   ECR_REPOSITORY: fg-academy-be
   AWS_REGION: ap-northeast-2
-  INFRA_DIR: /home/ubuntu/FG-Academy-Infra
+  INFRA_DIR: /home/ubuntu/FG-Academy-CICD
 
 jobs:
   build-and-deploy:
