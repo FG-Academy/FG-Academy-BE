@@ -70,6 +70,7 @@ jobs:
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.backend
             echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> .env.backend
             echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env.backend
+            echo "AWS_CLOUDFRONT_DOMAIN=${{ secrets.AWS_CLOUDFRONT_DOMAIN }}" >> .env.backend
             echo "NODE_ENV=production" >> .env.backend
 
             # 배포 진행
