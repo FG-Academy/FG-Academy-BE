@@ -1,8 +1,9 @@
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
 
 export class CreateCourseDto {
-  // @IsNotEmpty()
-  // thumbnailImage: string;
+  @IsOptional()
+  @IsUrl()
+  thumbnailImagePath?: string;
 
   @IsNotEmpty()
   title: string;

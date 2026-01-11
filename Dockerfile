@@ -1,20 +1,35 @@
-# Base stage for installing dependencies and building
-FROM node:20.4.0-alpine3.18 AS development
+# Build stage
+FROM node:22-alpine AS build
 
-# Set the working directory
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
-
-# Install dependencies including 'devDependencies'
-RUN npm install
-
-# Copy the rest of the application code
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
+RUN pnpm run build
 
-# Expose the port the app runs on
-EXPOSE 8080
+# Production stage
+FROM node:22-alpine AS production
 
-# Start the application
-CMD ["npm", "run", "start:dev"]
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# 환경변수를 production으로 설정
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+# Production dependencies만 설치
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+# 빌드한 파일을 복사
+COPY --from=build /app/dist ./dist
+
+EXPOSE 3000
+
+# Production 모드로 앱 시작
+CMD ["pnpm", "run", "start:prod"]

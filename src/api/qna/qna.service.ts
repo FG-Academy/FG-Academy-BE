@@ -16,32 +16,22 @@ export class QnaService {
     private readonly answertRepository: Repository<Answer>,
   ) {}
 
-  createQuestionPost(userId, createQuestionDto) {
+  async createQuestionPost(userId, createQuestionDto) {
     const newQuestion = this.questionRepository.create({
       user: userId,
       ...createQuestionDto,
     });
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const saveQuestion = this.questionRepository.save(newQuestion);
-    } catch (err) {
-      throw err;
-    }
+    await this.questionRepository.save(newQuestion);
 
     return { message: '게시글이 성공적으로 업로드되었습니다.' };
   }
 
   async deleteQuestionPost(questionId: number) {
-    try {
-      await this.questionRepository.delete({
-        questionId: questionId,
-      });
+    await this.questionRepository.delete({
+      questionId: questionId,
+    });
 
-      // console.log(result);
-    } catch (err) {
-      throw err;
-    }
     return { message: '게시글이 성공적으로 삭제되었습니다..' };
   }
 
@@ -65,7 +55,6 @@ export class QnaService {
     return this.questionRepository.save(post);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async findQuestion(pageNum: number) {
     const itemsPerPage = 10;
     const [list, total] = await this.questionRepository.findAndCount({
@@ -96,11 +85,7 @@ export class QnaService {
       content: createAnswerDto.content,
     });
 
-    try {
-      await this.answertRepository.save(newAnswer);
-    } catch (err) {
-      throw err;
-    }
+    await this.answertRepository.save(newAnswer);
 
     return { message: '답변 댓글이 성공적으로 업로드되었습니다.' };
   }
@@ -120,13 +105,8 @@ export class QnaService {
 
     if (content) existAnswer.content = content;
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const updateAnswer = await this.answertRepository.save(existAnswer);
-      return { message: '성공적으로 수정했습니다. ' };
-    } catch (err) {
-      throw err;
-    }
+    await this.answertRepository.save(existAnswer);
+    return { message: '성공적으로 수정했습니다. ' };
   }
 
   async deleteAnswerPost(userId: number, answerId: number, level: string) {
@@ -152,12 +132,10 @@ export class QnaService {
   }
 
   async findQuestionAnswerPost(questionId: number) {
-    console.log(questionId);
     const questionWithAnswers = await this.questionRepository.findOne({
       where: { questionId: questionId },
       relations: ['answers', 'answers.user', 'user'],
     });
-    console.log(questionWithAnswers);
     if (!questionWithAnswers) {
       throw new Error('삭제되었거나 존재하지 않는 게시글입니다.');
     }

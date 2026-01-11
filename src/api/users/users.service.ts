@@ -99,6 +99,10 @@ export class UsersService {
     return user;
   }
 
+  async updateLastLoginAt(userId: number): Promise<void> {
+    await this.usersRepository.update({ userId }, { lastLoginAt: new Date() });
+  }
+
   async findOne(where: FindOneOptions<User>) {
     const user = await this.usersRepository.findOne(where);
 
@@ -129,7 +133,6 @@ export class UsersService {
     const ltr = await this.lectureTimeRecordRepository.findOne({
       where: { user: { userId }, lecture: { lectureId } },
     });
-    console.log(ltr);
 
     if (!ltr) {
       throw new HttpException(
@@ -168,7 +171,7 @@ export class UsersService {
         },
       );
     } catch {
-      console.log('error');
+      console.error('error');
     }
   }
 
@@ -287,8 +290,6 @@ export class UsersService {
       await this.entityManager.transaction(
         async (transactionalEntityManager) => {
           for (const row of worksheet.getRows(2, worksheet.rowCount - 1)) {
-            // console.log(row);
-            // const department = row.getCell(1).value.toString();
             const name = row.getCell(2).value.toString();
             const positionLabel = row.getCell(3).value.toString();
             const phoneNumber = row.getCell(4).value || '';
@@ -359,8 +360,6 @@ export class UsersService {
               await transactionalEntityManager.save(lectureTimeRecord);
             }
 
-            // console.log(doctrineCompleted);
-
             for (let i = 1; i <= doctrineCompleted; i++) {
               const lecture = await this.lectureRepository.findOneOrFail({
                 where: { course: twoCourse, lectureNumber: i },
@@ -384,12 +383,9 @@ export class UsersService {
       console.error('Error during transaction:', err);
       throw err; // 에러를 다시 던져서 호출자에게 알립니다.
     }
-    console.log('완료');
-    console.log('zz');
   }
 
   private async calculateCompleted(total: number, percentage: number | string) {
-    // console.log(total, percentage);
     if (percentage === '완료') {
       return total;
     }

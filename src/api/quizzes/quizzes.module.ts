@@ -5,9 +5,21 @@ import { QuizzesService } from './quizzes.service';
 import { Quiz } from 'src/entities/quiz.entity';
 import { QuizAnswer } from 'src/entities/quizAnswer.entity';
 import { QuizSubmit } from 'src/entities/quizSubmit.entity';
+import { Course } from 'src/entities/course.entity';
+import { Lecture } from 'src/entities/lecture.entity';
+import { Enrollment } from 'src/entities/enrollment.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Quiz, QuizAnswer, QuizSubmit])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Quiz,
+      QuizAnswer,
+      QuizSubmit,
+      Course,
+      Lecture,
+      Enrollment,
+    ]),
+  ],
   controllers: [QuizzesController],
   providers: [QuizzesService],
 })
