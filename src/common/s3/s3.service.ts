@@ -19,10 +19,14 @@ export class S3Service {
   private readonly s3Client: S3Client;
   private readonly bucketName: string;
   private readonly region: string;
+  private readonly cloudfrontDomain: string;
 
   constructor(private readonly configService: ConfigService) {
     this.region = this.configService.get<string>('AWS_REGION');
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    this.cloudfrontDomain = this.configService.get<string>(
+      'AWS_CLOUDFRONT_DOMAIN',
+    );
 
     this.s3Client = new S3Client({
       region: this.region,
@@ -70,6 +74,9 @@ export class S3Service {
   }
 
   getFileUrl(key: string): string {
+    if (this.cloudfrontDomain) {
+      return `https://${this.cloudfrontDomain}/${key}`;
+    }
     return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
   }
 
