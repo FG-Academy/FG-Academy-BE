@@ -187,18 +187,14 @@ export class CoursesService {
         HttpStatus.BAD_REQUEST,
       );
     } else {
-      try {
-        const enrollmentRepo = this.enrollmentRepository.create({
-          user: { userId: userId },
-          course: { courseId: courseId },
-        });
+      const enrollmentRepo = this.enrollmentRepository.create({
+        user: { userId: userId },
+        course: { courseId: courseId },
+      });
 
-        await this.enrollmentRepository.save(enrollmentRepo);
+      await this.enrollmentRepository.save(enrollmentRepo);
 
-        return { message: '수강신청을 성공적으로 완료했습니다!' };
-      } catch (err) {
-        throw err;
-      }
+      return { message: '수강신청을 성공적으로 완료했습니다!' };
     }
   }
 

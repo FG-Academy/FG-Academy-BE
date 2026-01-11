@@ -5,6 +5,7 @@ import {
   OneToMany,
   BeforeInsert,
   BeforeUpdate,
+  Index,
 } from 'typeorm';
 import { QuizSubmit } from './quizSubmit.entity';
 import { LectureTimeRecord } from './lectureTimeRecord.entity';
@@ -15,6 +16,7 @@ import { Question } from './question.entity';
 import { Answer } from './answer.entity';
 
 @Entity()
+@Index('IDX_user_email', ['email'])
 export class User {
   @PrimaryGeneratedColumn()
   userId: number;
@@ -69,6 +71,9 @@ export class User {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt: Date;
 
   @OneToMany(() => QuizSubmit, (quizSubmit) => quizSubmit.user, {
     cascade: true,

@@ -196,7 +196,6 @@ export class AdminService {
           let lectureCorrectQuizCount = 0;
 
           const quizzes = lecture.quizzes.map((quiz) => {
-            // console.log(quiz);
             const userSubmits = quiz.quizSubmits.filter(
               (submit) => submit.userId === userId,
             );
@@ -231,7 +230,6 @@ export class AdminService {
             }
 
             totalQuizCount++;
-            // console.log(totalQuizCount);
 
             return {
               quizId: quiz.quizId,
@@ -311,17 +309,12 @@ export class AdminService {
 
     const lectureDetails = await Promise.all(
       lectures.map(async (lecture) => {
-        // Iterate through each quiz in the lecture
         const quizzes = await Promise.all(
           lecture.quizzes.map(async (quiz) => {
-            // console.log('quiz', quiz);
-            // Fetch quizSubmits separately based on userId and quizId
             const quizSubmits = await this.quizSubmitRepository.find({
               where: { user: { userId }, quiz: { quizId: quiz.quizId } },
               order: { quiz: { quizSubmits: { createdAt: 'DESC' } } },
             });
-
-            // console.log('quizSubmits', quizSubmits);
 
             let lastSubmit = null;
             let answerType = '미채점';
@@ -343,8 +336,6 @@ export class AdminService {
             const correctCount = quizSubmits.filter(
               (submit) => submit.status === 1,
             ).length;
-
-            // console.log('last', lastSubmit);
 
             return {
               quizId: quiz.quizId,
@@ -464,9 +455,9 @@ export class AdminService {
     return courses;
   }
 
-  async createCourse(createCourseDto: CreateCourseDto, filepath: string) {
+  async createCourse(createCourseDto: CreateCourseDto) {
     const newCourseData = this.courseRepository.create({
-      thumbnailImagePath: filepath,
+      thumbnailImagePath: createCourseDto.thumbnailImagePath,
       category: {
         name: createCourseDto.curriculum,
       },
@@ -487,7 +478,7 @@ export class AdminService {
       if (deleteResult.affected === 0) {
         throw new NotFoundException('존재하지 않는 코스입니다.');
       }
-    } catch (error) {
+    } catch {
       throw new NotFoundException('존재하지 않는 코스입니다.');
     }
   }
@@ -578,7 +569,7 @@ export class AdminService {
       );
 
       return newCourses;
-    } catch (error) {
+    } catch {
       throw new NotFoundException('코스 복사 중 오류가 발생했습니다.');
     }
   }
@@ -603,11 +594,7 @@ export class AdminService {
     return course;
   }
 
-  async updateCourse(
-    courseId: number,
-    updateCourseDto: UpdateCourseDto,
-    filepath: string | undefined,
-  ) {
+  async updateCourse(courseId: number, updateCourseDto: UpdateCourseDto) {
     const course = await this.courseRepository.findOne({
       where: {
         courseId,
@@ -618,7 +605,6 @@ export class AdminService {
     if (!course) {
       throw new Error('Course not found');
     }
-    // console.log(updateCourseDto);
 
     course.courseId = courseId;
     course.title = updateCourseDto.title ?? course.title;
@@ -629,10 +615,9 @@ export class AdminService {
     course.category.name = updateCourseDto.curriculum ?? course.category.name;
     course.openDate = updateCourseDto.openDate ?? course.openDate;
     course.finishDate = updateCourseDto.finishDate ?? course.finishDate;
-    if (filepath) {
-      course.thumbnailImagePath = filepath;
+    if (updateCourseDto.thumbnailImagePath) {
+      course.thumbnailImagePath = updateCourseDto.thumbnailImagePath;
     }
-    // console.log(course);
 
     await this.courseRepository.update({ courseId }, course); // Save the course with all changes
   }
@@ -852,14 +837,6 @@ export class AdminService {
         quizType: quizType === '객관식' ? 1 : 0,
       });
 
-    // if (answerStatus && answerStatus !== '') {
-    //   console.log('hi', answerStatus);
-    //   const statusMap = { 정답: 1, 미채점: 0, 오답: 2 };
-    //   latestQuizSubmissions.andWhere('quizSubmit.status = :status', {
-    //     status: statusMap[answerStatus],
-    //   });
-    //   console.log(statusMap[answerStatus]);
-    // }
     // 정렬 조건
     latestQuizSubmissions.orderBy(
       'quizSubmit.createdAt',
@@ -1016,7 +993,6 @@ export class AdminService {
           correctQuizzes: 0,
         };
         courseMap.set(course.courseId, courseData);
-        courseData;
       }
       let lectureData = courseData.lectures.get(lecture.lectureId);
       if (!lectureData) {

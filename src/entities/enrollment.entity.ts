@@ -4,20 +4,16 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Course } from './course.entity';
 import { User } from './user.entity';
 
 @Entity()
+@Index('IDX_enrollment_user_course', ['user', 'course'])
 export class Enrollment {
   @PrimaryGeneratedColumn()
   id: number; // 복합 키 대신 단일 ID 사용
-
-  //   @Column()
-  //   userId: number;
-
-  //   @Column()
-  //   courseId: number;
 
   @Column({ default: 0 })
   completedNumber: number;

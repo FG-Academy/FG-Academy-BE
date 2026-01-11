@@ -4,17 +4,17 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Quiz } from './quiz.entity';
 import { User } from './user.entity';
 
 @Entity()
+@Index('IDX_quiz_submit_user_quiz', ['user', 'quiz'])
+@Index('IDX_quiz_submit_quiz', ['quiz'])
 export class QuizSubmit {
   @PrimaryGeneratedColumn()
-  id: number; // Composite primary key 대신 단일 ID 사용
-
-  @Column()
-  userId: number;
+  id: number;
 
   @Column({ comment: '객관식 답안 제출' })
   multipleAnswer: number;
@@ -49,6 +49,9 @@ export class QuizSubmit {
   })
   @JoinColumn({ name: 'quizId' })
   quiz: Quiz;
+
+  @Column()
+  userId: number;
 
   @ManyToOne(() => User, (user) => user.quizSubmits, {
     onDelete: 'CASCADE',
