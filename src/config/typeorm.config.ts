@@ -12,6 +12,7 @@ import { QuizSubmit } from '../entities/quizSubmit.entity';
 import { Question } from 'src/entities/question.entity';
 import { Answer } from 'src/entities/answer.entity';
 import { Category } from 'src/entities/category.entity';
+import * as path from 'path';
 
 export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
   imports: [ConfigModule],
@@ -40,8 +41,11 @@ export const TypeOrmConfig: TypeOrmModuleAsyncOptions = {
       Category,
     ],
     // entities: [__dirname + '/src/entities/*.ts'],
-    migrationsRun: false,
-    migrations: [__dirname + '/src/database/migrations/*.ts'],
+    migrationsRun: true,
+    // __dirname은 현재 파일의 위치입니다.
+    // 보통 이 파일이 src/config 등에 있다면 '..'로 상위로 가서 database 폴더를 찾아야 합니다.
+    // *{.ts,.js} 로 설정해야 개발(ts)과 운영(js) 모두 돌아갑니다.
+    migrations: [path.join(__dirname, '..', 'database/migrations/*{.ts,.js}')],
     cli: {
       migrationsDir: 'src/database/migrations', // migration 파일을 생성할 디렉토리
     },
