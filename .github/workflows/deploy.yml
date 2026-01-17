@@ -64,17 +64,18 @@ jobs:
             chmod 600 .env.backend
 
             # GitHub Secrets 값을 이용해 .env 파일 새로 생성
-            echo "MYSQL_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env.backend
-            echo "MYSQL_DATABASE=${{ secrets.DB_DATABASE }}" >> .env.backend
-            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env.backend
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.backend
-            echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env.backend
-            echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env.backend
             echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.backend
             echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.backend
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env.backend
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.backend
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.backend
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.backend
             echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> .env.backend
             echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env.backend
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env.backend
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.backend
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.backend
+            echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env.backend
             echo "AWS_CLOUDFRONT_DOMAIN=${{ secrets.AWS_CLOUDFRONT_DOMAIN }}" >> .env.backend
             echo "NODE_ENV=production" >> .env.backend
 
