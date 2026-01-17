@@ -72,9 +72,9 @@ jobs:
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.backend
             echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> .env.backend
             echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env.backend
-            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env.backend
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.backend
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.backend
+            echo "AWS_S3_REGION=${{ secrets.AWS_S3_REGION }}" >> .env.backend
+            echo "AWS_S3_ACCESS_KEY_ID=${{ secrets.AWS_S3_ACCESS_KEY_ID }}" >> .env.backend
+            echo "AWS_S3_SECRET_ACCESS_KEY=${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}" >> .env.backend
             echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env.backend
             echo "AWS_CLOUDFRONT_DOMAIN=${{ secrets.AWS_CLOUDFRONT_DOMAIN }}" >> .env.backend
             echo "NODE_ENV=production" >> .env.backend

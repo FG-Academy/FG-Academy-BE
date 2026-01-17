@@ -22,7 +22,7 @@ export class S3Service {
   private readonly cloudfrontDomain: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.region = this.configService.get<string>('AWS_REGION');
+    this.region = this.configService.get<string>('AWS_S3_REGION');
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
     this.cloudfrontDomain = this.configService.get<string>(
       'AWS_CLOUDFRONT_DOMAIN',
@@ -31,9 +31,9 @@ export class S3Service {
     this.s3Client = new S3Client({
       region: this.region,
       credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
+        accessKeyId: this.configService.get<string>('AWS_S3_ACCESS_KEY_ID'),
         secretAccessKey: this.configService.get<string>(
-          'AWS_SECRET_ACCESS_KEY',
+          'AWS_S3_SECRET_ACCESS_KEY',
         ),
       },
     });
