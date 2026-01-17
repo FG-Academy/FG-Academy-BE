@@ -49,14 +49,19 @@ jobs:
 
             cd ${{ env.INFRA_DIR }}
 
+
             # Docker Compose가 이미지 주소를 알 수 있게 .env 파일 생성
-            rm -f .env
+            sudo rm -f .env
+            touch .env
+            chmod 600 .env
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> .env
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env
             echo "MYSQL_DATABASE=${{ secrets.DB_DATABASE }}" >> .env
 
             # 백엔드 앱이 사용할 변수는 .env.backend에 생성
-            rm -f .env.backend
+            sudo rm -f .env.backend  # 👈 여기도 sudo 추가!
+            touch .env.backend
+            chmod 600 .env.backend
 
             # GitHub Secrets 값을 이용해 .env 파일 새로 생성
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env.backend
